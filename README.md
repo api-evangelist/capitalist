@@ -6,6 +6,8 @@ Capitalist allows you to make mass payments and receive money without opening ac
 ## Scope
 
 - **Type:** Index 
+- **Position:** Consuming 
+- **Access:** 3rd-Party 
 
 ## Tags
 
@@ -13,8 +15,8 @@ Capitalist allows you to make mass payments and receive money without opening ac
 
 ## Timestamps
 
-- **Created:** 2024-11-05T00:00:00.000Z 
-- **Modified:** 2024-12-15 
+- **Created:** 2024-11-05 
+- **Modified:** 2024-12-22 
 
 ## APIs
 
@@ -22,7 +24,9 @@ Capitalist allows you to make mass payments and receive money without opening ac
 Capitalist allows you to make mass payments and receive money without opening accounts in payment systems.
 
 **Human URL:** [https://capitalist.net/developers/api](https://capitalist.net/developers/api)
+r
 **Base URL:** [http://api.example.com](http://api.example.com)
+r
 
 #### Tags
 
