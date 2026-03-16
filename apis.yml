@@ -1,12 +1,24 @@
 aid: capitalist
-url: https://github.com/api-search/capitalist/apis.yml
+url: >-
+  https://raw.githubusercontent.com/api-evangelist/capitalist/refs/heads/main/apis.yml
+name: Capitalist
+tags:
+  - Payments
+  - Finance
+type: Index
+image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
+access: 3rd-Party
+created: '2024-11-05'
+modified: '2026-03-16'
+position: Consumer
+description: >-
+  Capitalist allows you to make mass payments and receive money without
+  opening accounts in payment systems.
 apis:
   - aid: capitalist:capitalist-api
     name: Capitalist API
     tags:
-      - API
-    image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
-    baseURL: http://api.example.com
+      - Payments
     humanURL: https://capitalist.net/developers/api
     properties:
       - url: https://capitalist.net/developers/api
@@ -14,41 +26,20 @@ apis:
     description: >-
       Capitalist allows you to make mass payments and receive money without
       opening accounts in payment systems.
-name: Capitalist
-tags:
-  - Payments
-type: Index
-image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
 common:
-  - url: https://example.com/signup
-    type: Signup
-  - url: https://capitalist.net/fees
-    type: Pricing Page
-  - url: https://capitalist.net/news
-    type: News Page
-  - url: https://capitalist.net/contacts
-    type: Contact Page
-  - url: https://capitalist.net/reg
-    type: Signup
-  - url: https://capitalist.net/login
-    type: Sign In
-  - url: https://capitalist.net/useragreement
-    type: User Agreement
-  - url: https://capitalist.net/privacypolicy
-    type: Privacy Policy
-  - url: https://www.linkedin.com/company/capitalist-inc/
-    type: LinkedIn
-  - url: https://www.youtube.com/channel/UCR3XzSUhKyacrC9E286hEIw
-    type: Youtube
-created: '2024-11-05T00:00:00.000Z'
-modified: '2024-12-22'
-description: >-
-  Capitalist allows you to make mass payments and receive money without opening
-  accounts in payment systems.
+  - type: Website
+    url: https://capitalist.net/
+  - type: Sign Up
+    url: https://capitalist.net/reg
+  - type: Login
+    url: https://capitalist.net/login
+  - type: Pricing
+    url: https://capitalist.net/fees
+  - type: Privacy Policy
+    url: https://capitalist.net/privacypolicy
+  - type: Terms of Service
+    url: https://capitalist.net/useragreement
 maintainers:
   - FN: Kin Lane
-    email: info@apievangelist.com
-    X-twitter: apievangelist
-specificationVersion: '0.18'
-position: Consuming
-access: 3rd-Party
+    email: kin@apievangelist.com
+specificationVersion: '0.19'
