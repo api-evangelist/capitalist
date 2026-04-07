@@ -3,8 +3,8 @@ url: >-
   https://raw.githubusercontent.com/api-evangelist/capitalist/refs/heads/main/apis.yml
 name: Capitalist
 tags:
-  - Payments
   - Finance
+  - Payments
 type: Index
 image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
 access: 3rd-Party
