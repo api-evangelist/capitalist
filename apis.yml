@@ -11,7 +11,7 @@ description: >-
   affiliate-network, and marketplace use cases operating across the CIS
   region and globally.
 type: Index
-x-type: company
+kind: company
 position: Consumer
 access: 3rd-Party
 image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
@@ -67,15 +67,15 @@ common:
     url: https://capitalist.net/
   - type: Documentation
     url: https://capitalist.net/developers/api
-  - type: Sign Up
+  - type: SignUp
     url: https://capitalist.net/reg
   - type: Login
     url: https://capitalist.net/login
   - type: Pricing
     url: https://capitalist.net/fees
-  - type: Privacy Policy
+  - type: PrivacyPolicy
     url: https://capitalist.net/privacypolicy
-  - type: Terms of Service
+  - type: TermsOfService
     url: https://capitalist.net/useragreement
 maintainers:
   - FN: Kin Lane
