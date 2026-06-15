@@ -1,0 +1,33 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Capitalist Payments API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "apikey",
+      "key": "login",
+      "value": "{{login}}",
+      "placement": "query"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Capitalist API operation",
+        "type": "http"
+      },
+      "http": {
+        "method": "POST",
+        "url": "https://api.capitalist.net/",
+        "body": {
+          "type": "form-urlencoded",
+          "data": []
+        }
+      },
+      "docs": "Single entrypoint for all Capitalist API operations. The `operation`\nform field selects the operation (e.g. `get_accounts`,\n`import_batch_advanced`, `process_batch`). See the per-operation\ndocumentation for the operation-specific parameters and response\nschemas.\n"
+    }
+  ],
+  "bundled": true
+}

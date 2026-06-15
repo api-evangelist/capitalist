@@ -1,0 +1,216 @@
+{
+  "item": [
+    {
+      "id": "9350e024-1f53-4025-b2bb-9817caa9e0a4",
+      "name": "Capitalist API operation",
+      "request": {
+        "name": "Capitalist API operation",
+        "description": {
+          "content": "Single entrypoint for all Capitalist API operations. The `operation`\nform field selects the operation (e.g. `get_accounts`,\n`import_batch_advanced`, `process_batch`). See the per-operation\ndocumentation for the operation-specific parameters and response\nschemas.\n",
+          "type": "text/plain"
+        },
+        "url": {
+          "path": [
+            ""
+          ],
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "query": [],
+          "variable": []
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          },
+          {
+            "key": "Accept",
+            "value": "text/plain"
+          }
+        ],
+        "method": "POST",
+        "auth": null,
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "disabled": false,
+              "key": "login",
+              "value": "<string>",
+              "description": "(Required) Capitalist account username (not email)."
+            },
+            {
+              "disabled": false,
+              "key": "password",
+              "value": "<password>",
+              "description": "(Required) Plain password or certificate-encrypted signature."
+            },
+            {
+              "disabled": false,
+              "key": "operation",
+              "value": "<string>",
+              "description": "(Required) Name of the operation to invoke. Known operations include:\ncurrency_rates, documents_search, get_accounts,\nget_batch_info, get_document_fee, get_documents_history_ext,\nget_token, import_batch_advanced, is_verified_account,\nprocess_batch.\n"
+            },
+            {
+              "disabled": false,
+              "key": "format",
+              "value": "plain",
+              "description": "Response format selector."
+            },
+            {
+              "disabled": false,
+              "key": "batch",
+              "value": "<string>",
+              "description": "Batch payments payload in Capitalist's documented batch\nformat (used with `import_batch_advanced` and `process_batch`).\n"
+            },
+            {
+              "disabled": false,
+              "key": "token",
+              "value": "<string>",
+              "description": "One-time security token (paired with `get_token`)."
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "id": "6bc60e3d-e440-4aa3-a373-3bb7f2b0b5f8",
+          "name": "Operation response. The first line indicates success/failure;\nsubsequent lines carry operation-specific data in plain text,\nCSV, or XML depending on the requested response format.\n",
+          "originalRequest": {
+            "url": {
+              "path": [
+                ""
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "login",
+                  "value": "<API Key>"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "disabled": false,
+                  "description": {
+                    "content": "(Required) Capitalist account username (not email).",
+                    "type": "text/plain"
+                  },
+                  "key": "login",
+                  "value": "<string>"
+                },
+                {
+                  "disabled": false,
+                  "description": {
+                    "content": "(Required) Plain password or certificate-encrypted signature.",
+                    "type": "text/plain"
+                  },
+                  "key": "password",
+                  "value": "<password>"
+                },
+                {
+                  "disabled": false,
+                  "description": {
+                    "content": "(Required) Name of the operation to invoke. Known operations include:\ncurrency_rates, documents_search, get_accounts,\nget_batch_info, get_document_fee, get_documents_history_ext,\nget_token, import_batch_advanced, is_verified_account,\nprocess_batch.\n",
+                    "type": "text/plain"
+                  },
+                  "key": "operation",
+                  "value": "<string>"
+                },
+                {
+                  "disabled": false,
+                  "description": {
+                    "content": "Response format selector.",
+                    "type": "text/plain"
+                  },
+                  "key": "format",
+                  "value": "plain"
+                },
+                {
+                  "disabled": false,
+                  "description": {
+                    "content": "Batch payments payload in Capitalist's documented batch\nformat (used with `import_batch_advanced` and `process_batch`).\n",
+                    "type": "text/plain"
+                  },
+                  "key": "batch",
+                  "value": "<string>"
+                },
+                {
+                  "disabled": false,
+                  "description": {
+                    "content": "One-time security token (paired with `get_token`).",
+                    "type": "text/plain"
+                  },
+                  "key": "token",
+                  "value": "<string>"
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/xml"
+            }
+          ],
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<element>(string)</element>",
+          "cookie": [],
+          "_postman_previewlanguage": "xml"
+        }
+      ],
+      "event": [],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      }
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://api.capitalist.net",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "login"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}"
+      },
+      {
+        "key": "in",
+        "value": "query"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "7f64314c-fbfb-44b9-ae75-7439be68e2f5",
+    "name": "Capitalist Payments API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "Capitalist Payments API for mass payouts, accounts, currency conversion,\nand document history. The API is a single HTTP/1.1 POST endpoint at\nhttps://api.capitalist.net/ where the operation is selected via the\n`operation` form field. Requests may be sent as\napplication/x-www-form-urlencoded or multipart/form-data and must\ninclude a Capitalist username and password (or a \"Plain password\" or\nencrypted-certificate signature) plus an optional response format\nselector.\n\nThis specification is a best-effort, hand-authored representation of\nthe publicly documented operations at\nhttps://capitalist.net/developers/api. Detailed operation parameters\nand response payloads are documented per-operation by Capitalist; this\nfile models the high-level operation envelope.\n\n\nContact Support:\n Name: Capitalist",
+      "type": "text/plain"
+    }
+  }
+}
