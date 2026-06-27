@@ -71,7 +71,7 @@ common:
     url: https://capitalist.net/
   - type: Documentation
     url: https://capitalist.net/developers/api
-  - type: SignUp
+  - type: Signup
     url: https://capitalist.net/reg
   - type: Login
     url: https://capitalist.net/login
