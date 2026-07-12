@@ -63,6 +63,10 @@ apis:
       - Cross-border remittance automation
       - Consolidated reconciliation across multiple payment rails
 common:
+  - type: DomainSecurity
+    url: security/capitalist-domain-security.yml
+  - type: Authentication
+    url: authentication/capitalist-authentication.yml
   - type: GitHubOrganization
     url: https://github.com/capitalist-net
   - type: LinkedIn

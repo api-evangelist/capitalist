@@ -1,0 +1,20 @@
+generated: '2026-07-11'
+method: derived
+source: openapi/capitalist-openapi.yml
+summary:
+  types:
+  - apiKey
+  api_key_in:
+  - query
+schemes:
+- name: basicCreds
+  type: apiKey
+  in: query
+  parameter: login
+  description: |-
+    Capitalist authenticates via `login` and `password` form fields
+    (the API also supports certificate-signed requests for elevated
+    operations). Modeled as an apiKey here because OpenAPI does not
+    natively express the form-credentials pattern.
+  sources:
+  - openapi/capitalist-openapi.yml
