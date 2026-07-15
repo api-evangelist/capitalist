@@ -63,6 +63,8 @@ apis:
       - Cross-border remittance automation
       - Consolidated reconciliation across multiple payment rails
 common:
+  - type: AgenticAccess
+    url: agentic-access/capitalist-agentic-access.yml
   - type: DomainSecurity
     url: security/capitalist-domain-security.yml
   - type: Authentication
