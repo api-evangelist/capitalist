@@ -12,9 +12,22 @@ description: >-
   region and globally.
 type: Index
 kind: company
+accessModel:
+  pricing: freemium
+  onboarding: self-serve
+  trial: false
+  try_now: true
+  public: false
+  label: Freemium · Self-serve signup
+  confidence: high
+  source:
+  - plans
+  - authentication
+  generated: '2026-07-22'
+  method: derived
 position: Consumer
 access: 3rd-Party
-image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/capitalist.png
 tags:
   - Bulk Payouts
   - Cryptocurrency
@@ -28,40 +41,48 @@ created: '2024-11-05'
 modified: '2026-04-23'
 specificationVersion: '0.19'
 apis:
-  - aid: capitalist:capitalist-api
-    name: Capitalist API
-    description: >-
-      The Capitalist API enables programmatic mass payouts, transfers,
-      currency conversion, and balance and transaction management across
-      Capitalist's supported payment systems and cryptocurrencies. It is
-      designed for businesses that need to pay large numbers of recipients
-      (affiliates, freelancers, publishers) without maintaining separate
-      accounts in each underlying payment system.
-    humanURL: https://capitalist.net/developers/api
-    tags:
-      - Bulk Payouts
-      - Mass Payments
-      - Payments
-      - Payouts
-    properties:
-      - type: Documentation
-        url: https://capitalist.net/developers/api
-      - type: Website
-        url: https://capitalist.net/developers/api
-    x-features:
-      - Mass payout submission for large batches of recipients
-      - Receiving money across multiple payment systems in one account
-      - Exchange/conversion between supported currencies and crypto
-      - Account balance queries across currencies
-      - Transaction history retrieval and reconciliation
-      - Single integration across fiat and cryptocurrency channels
-    x-use-cases:
-      - Affiliate and publisher payouts at scale
-      - Freelancer and contractor payments in multiple currencies
-      - Marketplace and gig-economy seller payouts
-      - Crypto-to-fiat and fiat-to-crypto conversion flows
-      - Cross-border remittance automation
-      - Consolidated reconciliation across multiple payment rails
+- aid: capitalist:capitalist-api
+  name: Capitalist API
+  description: >-
+    The Capitalist API enables programmatic mass payouts, transfers, currency conversion, and balance
+    and transaction management across Capitalist's supported payment systems and cryptocurrencies. It
+    is designed for businesses that need to pay large numbers of recipients (affiliates, freelancers,
+    publishers) without maintaining separate accounts in each underlying payment system.
+  humanURL: https://capitalist.net/developers/api
+  tags:
+  - Bulk Payouts
+  - Mass Payments
+  - Payments
+  - Payouts
+  properties:
+  - type: Documentation
+    url: https://capitalist.net/developers/api
+  - type: Website
+    url: https://capitalist.net/developers/api
+  x-features:
+  - Mass payout submission for large batches of recipients
+  - Receiving money across multiple payment systems in one account
+  - Exchange/conversion between supported currencies and crypto
+  - Account balance queries across currencies
+  - Transaction history retrieval and reconciliation
+  - Single integration across fiat and cryptocurrency channels
+  x-use-cases:
+  - Affiliate and publisher payouts at scale
+  - Freelancer and contractor payments in multiple currencies
+  - Marketplace and gig-economy seller payouts
+  - Crypto-to-fiat and fiat-to-crypto conversion flows
+  - Cross-border remittance automation
+  - Consolidated reconciliation across multiple payment rails
+- aid: capitalist:capitalist-capitalist-payments-api-api
+  name: Capitalist Capitalist Payments API API
+  description: >-
+    The Capitalist Payments API API from Capitalist — 1 operation(s) for capitalist payments api.
+  humanURL: https://capitalist.net/developers/api
+  tags:
+  - Capitalist Payments API
+  properties:
+  - type: OpenAPI
+    url: openapi/capitalist-capitalist-payments-api-api-openapi.yml
 common:
   - type: AgenticAccess
     url: agentic-access/capitalist-agentic-access.yml
