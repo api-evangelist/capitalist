@@ -1,0 +1,112 @@
+openapi: 3.1.0
+info:
+  title: Capitalist Payments API
+  description: |
+    Capitalist Payments API for mass payouts, accounts, currency conversion,
+    and document history. The API is a single HTTP/1.1 POST endpoint at
+    https://api.capitalist.net/ where the operation is selected via the
+    `operation` form field. Requests may be sent as
+    application/x-www-form-urlencoded or multipart/form-data and must
+    include a Capitalist username and password (or a "Plain password" or
+    encrypted-certificate signature) plus an optional response format
+    selector.
+
+    This specification is a best-effort, hand-authored representation of
+    the publicly documented operations at
+    https://capitalist.net/developers/api. Detailed operation parameters
+    and response payloads are documented per-operation by Capitalist; this
+    file models the high-level operation envelope.
+  version: "1.0.0"
+  contact:
+    name: Capitalist
+    url: https://capitalist.net/developers/api
+servers:
+  - url: https://api.capitalist.net
+security:
+  - basicCreds: []
+paths:
+  /:
+    post:
+      summary: Capitalist API operation
+      description: |
+        Single entrypoint for all Capitalist API operations. The `operation`
+        form field selects the operation (e.g. `get_accounts`,
+        `import_batch_advanced`, `process_batch`). See the per-operation
+        documentation for the operation-specific parameters and response
+        schemas.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema: { $ref: '#/components/schemas/OperationRequest' }
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/OperationRequest' }
+      responses:
+        '200':
+          description: |
+            Operation response. The first line indicates success/failure;
+            subsequent lines carry operation-specific data in plain text,
+            CSV, or XML depending on the requested response format.
+          content:
+            text/plain:
+              schema: { type: string }
+            application/xml:
+              schema: { type: string }
+            text/csv:
+              schema: { type: string }
+components:
+  securitySchemes:
+    basicCreds:
+      type: apiKey
+      in: query
+      name: login
+      description: |
+        Capitalist authenticates via `login` and `password` form fields
+        (the API also supports certificate-signed requests for elevated
+        operations). Modeled as an apiKey here because OpenAPI does not
+        natively express the form-credentials pattern.
+  schemas:
+    OperationRequest:
+      type: object
+      required: [login, password, operation]
+      properties:
+        login:
+          type: string
+          description: Capitalist account username (not email).
+        password:
+          type: string
+          format: password
+          description: Plain password or certificate-encrypted signature.
+        operation:
+          type: string
+          description: |
+            Name of the operation to invoke. Known operations include:
+            currency_rates, documents_search, get_accounts,
+            get_batch_info, get_document_fee, get_documents_history_ext,
+            get_token, import_batch_advanced, is_verified_account,
+            process_batch.
+          enum:
+            - currency_rates
+            - documents_search
+            - get_accounts
+            - get_batch_info
+            - get_document_fee
+            - get_documents_history_ext
+            - get_token
+            - import_batch_advanced
+            - is_verified_account
+            - process_batch
+        format:
+          type: string
+          description: Response format selector.
+          enum: [csv, xml, plain]
+          default: plain
+        batch:
+          type: string
+          description: |
+            Batch payments payload in Capitalist's documented batch
+            format (used with `import_batch_advanced` and `process_batch`).
+        token:
+          type: string
+          description: One-time security token (paired with `get_token`).
+      additionalProperties: true

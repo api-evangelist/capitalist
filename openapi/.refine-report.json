@@ -1,0 +1,14 @@
+{
+  "provider": "capitalist",
+  "sources": [
+    "capitalist-capitalist-payments-api-api-openapi.yml"
+  ],
+  "outputs": [
+    "capitalist-capitalist-payments-api-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [],
+  "skipped": []
+}
