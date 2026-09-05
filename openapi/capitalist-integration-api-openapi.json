@@ -1,0 +1,1738 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Integration API",
+    "description": "### Authentication Headers Required / Требуемые заголовки аутентификации\r\n\r\n- `API-Key`:your api key / ваш ключ API\r\n- `X-Request-Timestamp`: epoch millis / метка времени в миллисекундах\r\n- `Signature` = sha256_hex(`X-Request-Timestamp` + request body + API secret)\r\n\r\n<details>\r\n<summary><strong>Signature Calculation Example / Пример вычисления подписи</strong></summary>\r\n\r\n#### Input Data / Входные данные\r\n- **Request timestamp**: `1678901234567`\r\n- **Request body**: `{\"type\":\"PAYONEER\",\"accountFrom\":\"U0123504\",\"payload\":\"{\"account\":\"some@mail.com\"}\",\"userRequestId\":\"1745844029437\",\"callbackUrl\":\"https://some-domain.com/callbacksFromCap\",\"amount\":100}`\r\n- **API secret**: `\"somePrivateApiSecret\"`\r\n\r\n---\r\n\r\n#### Signature Calculation Steps / Этапы вычисления подписи\r\n\r\n1. **Concatenate** the following components as a single string / Объедините следующие компоненты в одну строку\r\n\r\n   ```\r\n   rawString = X-Request-Timestamp + requestBody + API secret\r\n   ```\r\n\r\n   In this case / В приведенном примере\r\n\r\n   ```plaintext\r\n   1678901234567{\"type\":\"PAYONEER\",\"accountFrom\":\"U0123504\",\"payload\":\"{\"account\":\"some@mail.com\"}\",\"userRequestId\":\"1745844029437\",\"callbackUrl\":\"https://some-domain.com/callbacksFromCap\",\"amount\":100}somePrivateApiSecret\r\n   ```\r\n\r\n2. **Calculate SHA-256 hex** of the string above / Вычислите SHA-256 hex строки выше\r\n\r\n   ```plaintext\r\n   val input = \"1678901234567{\"type\":\"PAYONEER\",\"accountFrom\":\"U0123504\",\"payload\":\"{\"account\":\"some@mail.com\"}\",\"userRequestId\":\"1745844029437\",\"callbackUrl\":\"https://some-domain.com/callbacksFromCap\",\"amount\":100}somePrivateApiSecret\"\r\n\r\n   val signature = sha256Hex(input)\r\n   ```\r\n\r\n3. **Resulting signature** (SHA-256 digest as a hex string) / Итоговая подпись\r\n\r\n   ```\r\n   650a5c077cca5559dfe49ce296a4a8a94c36e2878ce69585b823d276cf07c104\r\n   ```\r\n\r\n---\r\n\r\n✅ **Final Header to send:** / Итоговый заголовок запроса\r\n\r\n```http\r\nSignature: 650a5c077cca5559dfe49ce296a4a8a94c36e2878ce69585b823d276cf07c104\r\n```\r\n\r\n</details>\r\n\r\n<br/>\r\n\r\n---\r\nThere are specific validation rules defined for each supported record type in the system.  \r\nThese rules specify the required fields that must be present in the **payload** of the JSON request when creating a new payment.\r\n\r\n⚠️ Not all payment channels listed in documentation may be currently available.\r\n\r\n\r\n🇷🇺 Для каждого поддерживаемого типа записи в системе определены конкретные правила валидации.\r\nЭти правила указывают обязательные поля, которые должны присутствовать в теле (payload) JSON-запроса при создании нового платежа.\r\n\r\n⚠️ Не все платёжные каналы, указанные в документации, могут быть доступны в данный момент.\r\n\r\n<details>\r\n  <summary><strong>Record type validation requirements / Правила валидации по типам платежей</strong></summary>\r\n\r\n\r\n---\r\n<details><summary><em>ARBANK - Argentinian banks / банковские счета Аргентины</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа  \r\n  - `account`: beneficiary account id, alphanumeric - exact length depends on bank specifications / номер счета получателя, буквенно-цифровое, точная длина зависит от требований банка\r\n  - `taxId`:  exactly 11 digits of the beneficiary's tax id / ровно 11 цифр налогового номера получателя\r\n  - `cbu`: a 22-digit numeric code used to identify and route money transfers / 22-значный цифровой код, используемый для идентификации и направления денежных переводов\r\n#### ***Example JSON Payload for ARBANK***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"ARBANK\",\r\n    \"account\": \"12345\",\r\n    \"taxId\": \"98765432101\",\r\n    \"cbu\": \"9876543219876543219875\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>AZCARD - Azerbaijani cards / карты Азербайджана</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: beneficiary card number, exact length depends on issuer / числовой номер карты получателя, длина зависит от эмитента\r\n  - `cardExpiryYear`: 4-digit future year (e.g., 2033) / год в формате YYYY (не ранее текущего)\r\n  - `cardExpiryMonth`: 2-digit month (01-12) / месяц в формате MM (01-12)\r\n  - `isAzCard`: indicates whether the card is issued in AZ / указывает, является ли карта AZ\r\n  - `binCountry`: 3-letter country code (e.g., AZE) / код страны BIN карты\r\n  - `cardCountry`: 3-letter country code (AZE) / код страны карты\r\n\r\n#### ***Example JSON Payload for AZCARD***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"AZCARD\",\r\n    \"account\" : \"1123123123\",\r\n    \"cardExpiryYear\": \"2033\",\r\n    \"cardExpiryMonth\" : \"11\",\r\n    \"isAzCard\": true,\r\n    \"binCountry\" : \"AZE\",\r\n    \"cardCountry\": \"AZE\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary>banks : <em>MALAYSIA_BANK - Malaysian Banks / банковские счета Малайзии, INDONESIA_BANK - Indonesian Banks / банковские счета Индонезии, \r\nTHAILAND_BANK Thai Banks / банковские счета Тайланда, SOUTH_KOREA_BANK - South Korean Banks / банковские счета Южной Кореи</em></summary>\r\n\r\n***Validation Rules:***\r\n- Top-level fields:\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: digits only, beneficiary bank account (length varies by country) / только цифры банковского счета получателя\r\n  - `destination`: object containing bank details / объект с банковскими реквизитами\r\n  - `recipient`: object containing recipient information / объект с информацией о получателе\r\n\r\n- Destination fields:\r\n  - `destination.bankCode`: bank identifier code (format varies by country) / код банка\r\n  - `destination.accountName`: name on the account / имя владельца счёта\r\n  - `destination.accountNumber`: recipient account number / номер счёта получателя\r\n\r\n- Recipient fields:\r\n  - `recipient.firstName`: recipient's first name / имя получателя\r\n  - `recipient.lastName`: recipient's last name / фамилия получателя\r\n  - `recipient.email`: recipient's email / email получателя\r\n  - `recipient.phone`: recipient's phone number / телефон получателя\r\n  - `recipient.zipCode`: postal code / почтовый индекс\r\n  - `recipient.city`: recipient's city / город получателя\r\n  - `recipient.address`: recipient's street address / адрес получателя\r\n  - `recipient.country`: lowercase ISO 2-letter country code (e.g., 'my', 'id', 'th', 'kr') / код страны в нижнем регистре\r\n\r\n#### ***Example JSON Payload for bank***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"MALAYSIA_BANK\",\r\n    \"destination\": {\r\n      \"bankCode\": \"4323\",\r\n      \"accountName\": \"AA43\",\r\n      \"accountNumber\": \"LOC123\"\r\n    },\r\n    \"recipient\": {\r\n      \"firstName\": \"John\",\r\n      \"lastName\": \"Doe\",\r\n      \"email\": \"some@mail.com\",\r\n      \"phone\": \"123456789\",\r\n      \"zipCode\": \"100\",\r\n      \"city\": \"New York\",\r\n      \"address\": \"Main str. 13\",\r\n      \"country\": \"USA\"\r\n    },\r\n    \"account\": \"123456789\"\r\n  }\r\n}\r\n```\r\n---\r\n</details>\r\n<details><summary><em>BRBANK - Brazilian Banks / банковские счета Бразилии</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `taxId` : beneficiary 11 digits of the taxpayer identification number (CPF format) / 11 цифр налогового номера получателя (формат CPF)\r\n  - `name` : full legal name / полное имя\r\n  - `email`: valid email format / валидный email\r\n  - `additionalRemark` : minimum 6 characters / минимум 6 символов\r\n#### ***Example JSON Payload for BRBANK***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"BRBANK\",\r\n    \"taxId\": \"12345678912\",\r\n    \"name\": \"Edward Snow\",\r\n    \"email\": \"some@mail.com\",\r\n    \"additionalRemark\" : \"Own funds\"\r\n  }\r\n}\r\n```\r\n---\r\n</details>\r\n<details><summary><em>COBANK - Columbian Banks / банковские счета Колумбии</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `taxId`: must be 9 to 11 digits of the beneficiary's taxpayer identification number / 9-11 цифр налогового номера получателя\r\n  - `fullName`: full legal name / полное имя\r\n  - `email`: valid email format / валидный email\r\n  - `phone`: must be 11 to 15 digits of the phone number / 11-15 цифр номера телефона\r\n#### ***Example JSON Payload for COBANK***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"COBANK\",\r\n    \"taxId\": \"12345678912\",\r\n    \"fullName\": \"Edward Snow\",\r\n    \"email\": \"some@mail.com\",\r\n    \"phone\" : \"1234567891234\"\r\n  }\r\n}\r\n```\r\n---\r\n</details>\r\n<details><summary>crypto: <em>BITCOIN / ETH / USDCERC20 / USDTERC20 / USDTTRC20</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: must be at least 26 symbols of the beneficiary wallet's address / минимум 26 символов адреса кошелька получателя\r\n#### ***Example JSON Payload for crypto***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"BITCOIN\",\r\n    \"account\": \"0xhsjey2jkkaslkdlaksdjnzxmcnqwoiei\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>EUR_NETELLER – electronic wallets in euros via Neteller / электронные кошельки в евро через Neteller, EUR_SKRILL - electronic wallets in euros via Skrill / электронные кошельки в евро через Skrill</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `wallet_email`: beneficiary valid email format / валидный email получателя\r\n  - `name`: legal name / имя\r\n  - `surname`: legal surname / фамилия\r\n  - `country`: ISO country code / код страны (ISO стандарт)\r\n  - `city`: city of residence / город проживания\r\n  - `address`: physical address / физический адрес\r\n  - `zip`: postal code / почтовый индекс\r\n  - `code`: verification code / код верификации\r\n  - `phone`: digits only / только цифры\r\n  - `client_ip`: client's IP address / IP-адрес клиента\r\n  - `state`: required client state (ISO ALPHA-2) if client country is USA or CANADA / штат, обязателен для США и Канады\r\n\r\n#### ***Example JSON Payload for SKRILL / NETELLER***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"EUR_NETELLER\",\r\n    \"wallet_email\": \"some@mail.com\",\r\n    \"name\": \"Ernesto\",\r\n    \"surname\": \"Hombre\",\r\n    \"country\" : \"USA\",\r\n    \"city\": \"New York\",\r\n    \"zip\": \"123456\",\r\n    \"code\": \"123\",\r\n    \"phone\" : \"57123123123\",\r\n    \"client_ip\" : \"127.0.0.1\",\r\n    \"state\" : \"CA\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>GCASH – digital wallet and mobile payment service / цифровой кошелёк и мобильный платёжный сервис</em></summary>\r\n\r\n***Validation Rules:***\r\n- Top-level fields:\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `receiver` - { object } - recipient details / данные получателя\r\n  - `sender` - { object } - sender details / данные отправителя\r\n  - `account` - GCash account number / номер аккаунта GCash\r\n  - `receiveAmount` - amount to receive / сумма к получению\r\n  - `receiveCurrency` - currency code / код валюты\r\n  - `channelCode` - payment channel code / код платежного канала\r\n  - `channelName` - payment channel name / название платежного канала\r\n- Receiver fields:\r\n  - `receiver.surName` - recipient's surname / фамилия получателя\r\n  - `receiver.givName` - recipient's given name / имя получателя\r\n  - `receiver.phone` (digits only) - recipient's mobile number / номер телефона получателя (только цифры)\r\n- Sender fields:\r\n  - `sender.purposeOfRemittance` - purpose of transaction / цель перевода\r\n\r\n#### ***Example JSON Payload for GCASH***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"GCASH\",\r\n    \"receiver\": {\r\n      \"surName\": \"Doe\",\r\n      \"givName\": \"John\",\r\n      \"phone\": \"123456789\"\r\n    },\r\n    \"sender\": {\r\n      \"purposeOfRemittance\": \"FAMILY SUPPORT\"\r\n    },\r\n    \"receiveAmount\": 100.50,\r\n    \"receiveCurrency\": \"USD\",\r\n    \"account\": \"ACCOUNT№\",\r\n    \"channelCode\": \"73\",\r\n    \"channelName\": \"GCASH\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>GECARD - Georgian cards / карты, выпущенные банками Грузии</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account` - beneficiary card number / номер карты получателя\r\n  - `senderFirstname` - sender's first name / имя отправителя\r\n  - `senderLastname` - sender's last name / фамилия отправителя\r\n  - `senderIdentityNumber` - sender's ID number / номер удостоверения личности отправителя\r\n  - `receiverFirstname` - recipient's first name / имя получателя\r\n  - `receiverLastname` - recipient's last name / фамилия получателя\r\n\r\n#### ***Example JSON Payload for GECARD***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"GECARD\",\r\n    \"account\" : \"1123123123\",\r\n    \"senderFirstname\": \"Ernesto\",\r\n    \"senderLastname\" : \"Alista\",\r\n    \"senderIdentityNumber\": \"AAS2123123\",\r\n    \"receiverFirstname\" : \"John\",\r\n    \"receiverLastname\": \"Snow\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>IMPS - Immediate Payment Service (India's real-time interbank electronic funds transfer system) / мгновенная платежная система (индийская система межбанковских электронных переводов в реальном времени)</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: digits only - beneficiary account number / номер счета получателя (только цифры)\r\n  - `account_name` - beneficiary account name / имя владельца счета получателя\r\n  - `bank_code`: digits only - Indian Financial System Code (IFSC) / код банка IFSC (только цифры)\r\n#### ***Example JSON Payload for IMPS***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"IMPS\",\r\n    \"account\": \"123123\",\r\n    \"account_name\" : \"My acc 22\",\r\n    \"bank_code\": \"123\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>KZCARD - Kazakhstani cards / платежные карты, выпущенные банками Казахстана</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: digits - beneficiary card number (only digits) / номер карты получателя (только цифры)\r\n  - `isKzCard` - boolean flag for KZ card identification / флаг идентификации карты Казахстана (true/false)\r\n  - `binCountry` - BIN country code (ISO 3166-1 alpha-3) / код страны BIN (ISO 3166-1 alpha-3)\r\n  - `cardCountry` - card issuing country (ISO 3166-1 alpha-3) / страна выпуска карты (ISO 3166-1 alpha-3)\r\n\r\n#### ***Example JSON Payload for KZCARD***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"KZCARD\",\r\n    \"account\" : \"1123123123\",\r\n    \"isKzCard\": true,\r\n    \"binCountry\": \"KAZ\",\r\n    \"cardCountry\": \"KAZ\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary>mobile : <em>QIWI, YANDEX, MEGAFON, TMOBILE, BEELINE, MTS, TELE2, YOTA - digital wallets and Russian mobile carrier payments / электронные кошельки и платежи через мобильных операторов РФ</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: must be 11 digits starting with 7 or 8 (RU phone number) / номер телефона российского оператора\r\n#### ***Example JSON Payload for mobile payments***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"MEGAFON\",\r\n    \"account\": \"89876543210\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>PAYONEER, PAYONEER_EUR, PAYONEER_USD - international digital payment platform for cross-border transfers / международная платёжная платформа для трансграничных переводов</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: must be valid beneficiary email format / email получателя\r\n#### ***Example JSON Payload for PAYONEER***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"PAYONEER_EUR\",\r\n    \"account\" : \"some@mail.com\"\r\n  }\r\n}\r\n```\r\n---\r\n\r\n</details><details><summary><em>PAYTM - Indian digital payments and mobile wallet platform / индийская платформа мобильных платежей и цифрового кошелька</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа \r\n  - `account`: digits only - beneficiary account number / номер счета получателя (только цифры)\r\n#### ***Example JSON Payload for PAYTM***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"PAYTM\",\r\n    \"account\": \"1234567\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>RUCARD - Russian cards / российские платежные карты</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: digits only - beneficiary russian card number (16-19 digits) / номер российской карты (16-19 цифр) получателя\r\n  - `name` - cardholder first name / имя владельца карты\r\n  - `surname` - cardholder last name / фамилия владельца карты\r\n  - `midname` - cardholder middle name / отчество владельца карты\r\n  - `cardCountry` - card issuer's country code / код страны-изготовителя карты\r\n  - `autosplit` - boolean for split payments (true/false) / флаг разделения платежа (true/false)\r\n\r\n#### ***Example JSON Payload for RUCARD***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"RUCARD\",\r\n    \"name\": \"Ernesto\",\r\n    \"account\" : \"1123123123\",\r\n    \"surname\": \"Alisto\",\r\n    \"midname\": \"\",\r\n    \"cardCountry\" : \"RU\",\r\n    \"autosplit\": false\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>RUCARDP2PDYN, RUCARDP2P - Peer-to-peer transfers between Russian cards / P2P-переводы между российскими картами</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: digits only - russian card number (16-19 digits) / номер российской карты (16-19 цифр)\r\n  - `name` - cardholder first name / имя владельца карты\r\n  - `surname` - cardholder last name / фамилия владельца карты\r\n  - `midname` - cardholder middle name / отчество владельца карты\r\n  - `cardCountry` - card issuer's country code / код страны-изготовителя карты\r\n\r\n#### ***Example JSON Payload for RUCARDP2P***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"RUCARDP2P\",\r\n    \"account\" : \"1123123123\",\r\n    \"name\": \"Ernesto\",\r\n    \"surname\": \"Alisto\",\r\n    \"midname\": \"\",\r\n    \"cardCountry\" : \"RU\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>SBP - Fast Payments System / Система Быстрых Платежей</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: digits only - beneficiary russian phone number / номер телефона получателя\r\n  - `email`: valid email - beneficiary's email / электронная почта получателя\r\n  - `nspk`: NSPK member bank ID / идентификатор банка-участника НСПК\r\n  - `firstName`: beneficiary's first name / имя получателя\r\n  - `lastName`: beneficiary's last name / фамилия получателя\r\n  - `bank`: bank BIC / БИК банка\r\n  - `bankName`: bank name / название банка\r\n\r\n#### ***Example JSON Payload for SBP***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"SBP\",\r\n    \"account\" : \"1123123123\",\r\n    \"email\": \"some@mail.com\",\r\n    \"nspk\": \"100000000004\",\r\n    \"firstName\": \"Ernest\",\r\n    \"lastName\" : \"Alista\",\r\n    \"bank\": \"Т-Банк\",\r\n    \"bankName\": \"Т-Банк\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>TRCARD - Turkish cards / платежные карты, выпущенные турецкими банками</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account` - beneficiary card number (16 digits starting with 4, 5 or 9) / номер карты получателя\r\n  - `senderFullname` - sender's full name as on card / полное имя владельца карты\r\n  - `senderIdentityNumber` - sender's tax code number (11 digits) / идентификационный налоговый номер\r\n  - `beneficiaryFullname` - recipient's full name / полное имя получателя средств\r\n\r\n#### ***Example JSON Payload for TRCARD***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"TRCARD\",\r\n    \"account\" : \"1123123123\",\r\n    \"senderFullname\": \"Ernesto Alista\",\r\n    \"senderIdentityNumber\" : \"AA2123213\",\r\n    \"beneficiaryFullname\": \"John Snow\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>UKRCARD - Ukrainian cards / платежные карты, выпущенные украинскими банками</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа \r\n  - `account`: digits only - beneficiary card number / номер карты получателя\r\n  - `autosplit` - boolean for split payments (true/false) / флаг разделения платежа (true/false)\r\n  - `cardCountry` - card issuer's country code / код страны-изготовителя карты\r\n\r\n#### ***Example JSON Payload for UKRCARD***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"UKRCARD\",\r\n    \"account\" : \"1123123123\",\r\n    \"autosplit\": false,\r\n    \"cardCountry\": \"UKR\"\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>UKR_MOBILE - Ukrainian mobile payments / платежи через мобильных операторов Украины</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: digits, beneficiary UKR phone number / номер мобильного телефона получателя\r\n\r\n#### ***Example JSON Payload for UKR_MOBILE***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"UKR_MOBILE\",\r\n    \"account\" : \"1123123123\"\r\n  }\r\n}\r\n```\r\n---\r\n\r\n</details><details><summary><em>UZCARD - Uzbekistanian cards / платежные карты, выпущенные узбекистанскими банками</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: digits, beneficiary card number / номер карты получателя\r\n  - `isUzCard`: boolean flag for UZ card identification / флаг идентификации карты Узбекистана (true/false)\r\n\r\n#### ***Example JSON Payload for UZCARD***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"UZCARD\",\r\n    \"account\" : \"1123123123\",\r\n    \"isUzCard\": true\r\n  }\r\n}\r\n```\r\n---\r\n</details><details><summary><em>WORLDCARDEUR, WORLDCARDUSD -  International payment cards / Международные платежные карты</em></summary>\r\n\r\n***Validation Rules:***\r\n  - `type`: payment document record type / тип платежного документа\r\n  - `account`: 16-18 digits - beneficiary card number (no spaces) / номер карты получателя (без пробелов, 16-18 цифр)\r\n  - `name`: cardholder first name / имя владельца карты\r\n  - `surname`: cardholder last name / фамилия владельца карты\r\n  - `cardCurrency`: must match service (EUR/USD) / должна соответствовать валюте сервиса (EUR/USD)\r\n  - `birthDate`: YYYY-MM-DD format / формат ГГГГ-ММ-ДД\r\n  - `address`: full street address / полный почтовый адрес\r\n  - `addressCountryCode`: country code / код страны ISO\r\n  - `addressCity`: city name / название города\r\n  - `cardExpiryMonth`: 2 digits (01-12) / 2 цифры (01-12)\r\n  - `cardExpiryYear`: 4 digits (e.g., 2025) / 4 цифры (напр., 2025)\r\n  - `cardCountry`: issuing country (e.g., USA, DEU) / страна эмитента\r\n\r\n#### ***Example JSON Payload for WORLDCARD***\r\n```json\r\n{\r\n  \"payload\": {\r\n    \"type\": \"WORLDCARDEUR\",\r\n    \"account\" : \"1123123123\",\r\n    \"name\": \"Ernesto\",\r\n    \"surname\" : \"Alista\",\r\n    \"cardCurrency\": \"USD\",\r\n    \"birthDate\" : \"1990-01-01\",\r\n    \"address\": \"61a Kurmangazy st.\",\r\n    \"addressCountryCode\" : \"KZ\",\r\n    \"addressCity\": \"Kyzylorda\",\r\n    \"cardExpiryMonth\" : \"11\",\r\n    \"cardExpiryYear\": \"2033\",\r\n    \"cardCountry\" : \"KZ\"\r\n  }\r\n}\r\n```\r\n</details>\r\n\r\n </details>\r\n\r\n---\r\n\r\nThe service will inform you about changes in the payment status using the callback_url link.\r\nPOST request will be sent to this URL (when the final status is received).\r\n\r\n🇷🇺 Сервис будет уведомлять вас об изменениях статуса платежа через ссылку callback_url.\r\nНа этот URL будет отправляться POST-запрос (при получении финального статуса).\r\n\r\n<details>\r\n  <summary><strong>Callback details with example / Структура callback-запроса с примером</strong></summary>\r\n\r\n***Callback headers:***\r\n- `X-Request-Timestamp`: epoch millis / метка времени в миллисекундах\r\n- `Signature` = sha256_hex(`X-Request-Timestamp` + request body + API secret)\r\n\r\n***Callback body fields:***\r\n  - `state`: required, document final state (EXECUTED, DECLINED) / обязательное, финальный статус документа\r\n  - `fee`: required, transaction fee amount / обязательное, сумма комиссии за операцию\r\n  - `documentId`: required, unique id of the transaction document / обязательное, уникальный идентификатор транзакции\r\n  - `comment`: optional, additional information or notes about the transaction / опциональное, дополнительная информация или примечания к транзакции\r\n  - `amount`: required, transaction amount / обязательное, сумма транзакции\r\n  - `currency`: required, transaction currency code (e.g., USD, EUR) / обязательное, код валюты транзакции\r\n  - `type`: required, transaction type (e.g., RUCARD, PAYONEER) / обязательное, тип транзакции\r\n  - `accountFrom`: required, source account identifier / обязательное, идентификатор исходного счёта\r\n  - `userRequestId`: required, unique request identifier from the user / обязательное, уникальный идентификатор запроса от пользователя системы\r\n  - `callbackUrl`: required, URL for sending callback notifications / обязательное, URL для отправки callback-уведомлений\r\n\r\n#### ***Example JSON body for callback***\r\n\r\n```json\r\n{\r\n  \"state\": \"EXECUTED\",\r\n  \"fee\": 1.12,\r\n  \"documentId\": 123,\r\n  \"comment\": \"Own funds\",\r\n  \"amount\": 100.00,\r\n  \"currency\": \"USD\",\r\n  \"type\": \"PAYONEER\",\r\n  \"accountFrom\": \"U0123504\",\r\n  \"userRequestId\": \"9876543219\",\r\n  \"callbackUrl\": \"https://some-domain.com/for-callbacks\"\r\n}\r\n```\r\n\r\n</details>",
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "https://api2.capitalist.net"
+    }
+  ],
+  "paths": {
+    "/v1/account/list": {
+      "description": "- account\n",
+      "get": {
+        "tags": [
+          "account"
+        ],
+        "description": "- account\n",
+        "parameters": [
+          {
+            "name": "currency",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "allowReserved": false,
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShortAccount"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/exchange": {
+      "description": "- exchange\n",
+      "post": {
+        "tags": [
+          "exchange"
+        ],
+        "description": "- exchange\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConversionDocumentRestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment": {
+      "description": "- payment\n",
+      "post": {
+        "tags": [
+          "payment"
+        ],
+        "description": "- payment\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentIntegrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePaymentIntegrationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment/document/{documentId}": {
+      "description": "- payment\n",
+      "get": {
+        "tags": [
+          "payment"
+        ],
+        "description": "- payment\n",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithdrawalStateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment/{userRequestId}": {
+      "description": "- payment\n",
+      "get": {
+        "tags": [
+          "payment"
+        ],
+        "description": "- payment\n",
+        "parameters": [
+          {
+            "name": "userRequestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithdrawalStateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rate": {
+      "description": "- rate\n",
+      "get": {
+        "tags": [
+          "rate"
+        ],
+        "description": "- rate\n",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "allowReserved": false,
+            "style": "form"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "allowReserved": false,
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "number",
+                  "format": "double"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "YANDEX": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "PAYONEER_EUR": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "GCASH": {
+        "type": "object",
+        "properties": {
+          "channelName": {
+            "type": "string"
+          },
+          "receiver": {
+            "$ref": "#/components/schemas/GCashReceiver"
+          },
+          "channelCode": {
+            "type": "string"
+          },
+          "receiveCurrency": {
+            "type": "string"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/GCashSender"
+          },
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "receiveAmount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "receiver",
+          "sender",
+          "account",
+          "receiveAmount",
+          "receiveCurrency",
+          "channelCode",
+          "channelName",
+          "type"
+        ]
+      },
+      "BITCOIN": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "EUR_SKRILL": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "surname": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "client_ip": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "wallet_email": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "wallet_email",
+          "name",
+          "surname",
+          "country",
+          "city",
+          "address",
+          "zip",
+          "code",
+          "phone",
+          "client_ip",
+          "type"
+        ]
+      },
+      "MEGAFON": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "AZCARD": {
+        "type": "object",
+        "properties": {
+          "cardCountry": {
+            "type": "string",
+            "description": "3-letter country code (AZE) / код страны карты"
+          },
+          "cardExpiryYear": {
+            "type": "string",
+            "description": "4-digit future year (e.g., 2033) / год в формате YYYY (не ранее текущего)"
+          },
+          "binCountry": {
+            "type": "string",
+            "description": "3-letter country code (e.g., AZE) / код страны BIN карты"
+          },
+          "isAzCard": {
+            "type": "boolean",
+            "description": "indicates whether the card is issued in AZ / указывает, является ли карта AZ"
+          },
+          "account": {
+            "type": "string",
+            "description": "beneficiary card number, exact length depends on issuer / числовой номер карты получателя, длина зависит от эмитента"
+          },
+          "type": {
+            "type": "string"
+          },
+          "cardExpiryMonth": {
+            "type": "string",
+            "description": "2-digit month (01-12) / месяц в формате MM (01-12)"
+          }
+        },
+        "required": [
+          "account",
+          "cardExpiryYear",
+          "cardExpiryMonth",
+          "isAzCard",
+          "binCountry",
+          "cardCountry",
+          "type"
+        ],
+        "description": "Azerbaijani cards / карты Азербайджана"
+      },
+      "COBANK": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "taxId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "taxId",
+          "fullName",
+          "email",
+          "phone",
+          "type"
+        ]
+      },
+      "UKR_MOBILE": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "QIWI": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "PaymentPayload": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ARBANK"
+          },
+          {
+            "$ref": "#/components/schemas/AZCARD"
+          },
+          {
+            "$ref": "#/components/schemas/MALAYSIA_BANK"
+          },
+          {
+            "$ref": "#/components/schemas/INDONESIA_BANK"
+          },
+          {
+            "$ref": "#/components/schemas/THAILAND_BANK"
+          },
+          {
+            "$ref": "#/components/schemas/SOUTH_KOREA_BANK"
+          },
+          {
+            "$ref": "#/components/schemas/BRBANK"
+          },
+          {
+            "$ref": "#/components/schemas/COBANK"
+          },
+          {
+            "$ref": "#/components/schemas/BITCOIN"
+          },
+          {
+            "$ref": "#/components/schemas/ETH"
+          },
+          {
+            "$ref": "#/components/schemas/USDCERC20"
+          },
+          {
+            "$ref": "#/components/schemas/USDTERC20"
+          },
+          {
+            "$ref": "#/components/schemas/USDTTRC20"
+          },
+          {
+            "$ref": "#/components/schemas/EUR_NETELLER"
+          },
+          {
+            "$ref": "#/components/schemas/EUR_SKRILL"
+          },
+          {
+            "$ref": "#/components/schemas/GCASH"
+          },
+          {
+            "$ref": "#/components/schemas/GECARD"
+          },
+          {
+            "$ref": "#/components/schemas/IMPS"
+          },
+          {
+            "$ref": "#/components/schemas/KZCARD"
+          },
+          {
+            "$ref": "#/components/schemas/QIWI"
+          },
+          {
+            "$ref": "#/components/schemas/YANDEX"
+          },
+          {
+            "$ref": "#/components/schemas/MEGAFON"
+          },
+          {
+            "$ref": "#/components/schemas/TMOBILE"
+          },
+          {
+            "$ref": "#/components/schemas/BEELINE"
+          },
+          {
+            "$ref": "#/components/schemas/MTS"
+          },
+          {
+            "$ref": "#/components/schemas/TELE2"
+          },
+          {
+            "$ref": "#/components/schemas/YOTA"
+          },
+          {
+            "$ref": "#/components/schemas/PAYONEER"
+          },
+          {
+            "$ref": "#/components/schemas/PAYONEER_EUR"
+          },
+          {
+            "$ref": "#/components/schemas/PAYONEER_USD"
+          },
+          {
+            "$ref": "#/components/schemas/PAYTM"
+          },
+          {
+            "$ref": "#/components/schemas/RUCARD"
+          },
+          {
+            "$ref": "#/components/schemas/RUCARDP2PDYN"
+          },
+          {
+            "$ref": "#/components/schemas/RUCARDP2P"
+          },
+          {
+            "$ref": "#/components/schemas/SBP"
+          },
+          {
+            "$ref": "#/components/schemas/TRCARD"
+          },
+          {
+            "$ref": "#/components/schemas/UKRCARD"
+          },
+          {
+            "$ref": "#/components/schemas/UKR_MOBILE"
+          },
+          {
+            "$ref": "#/components/schemas/UZCARD"
+          },
+          {
+            "$ref": "#/components/schemas/WORLDCARDEUR"
+          },
+          {
+            "$ref": "#/components/schemas/WORLDCARDUSD"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "IMPS": "#/components/schemas/IMPS",
+            "YANDEX": "#/components/schemas/YANDEX",
+            "TRCARD": "#/components/schemas/TRCARD",
+            "PAYONEER_EUR": "#/components/schemas/PAYONEER_EUR",
+            "GCASH": "#/components/schemas/GCASH",
+            "BITCOIN": "#/components/schemas/BITCOIN",
+            "EUR_SKRILL": "#/components/schemas/EUR_SKRILL",
+            "UZCARD": "#/components/schemas/UZCARD",
+            "MEGAFON": "#/components/schemas/MEGAFON",
+            "AZCARD": "#/components/schemas/AZCARD",
+            "COBANK": "#/components/schemas/COBANK",
+            "UKR_MOBILE": "#/components/schemas/UKR_MOBILE",
+            "QIWI": "#/components/schemas/QIWI",
+            "WORLDCARDEUR": "#/components/schemas/WORLDCARDEUR",
+            "SBP": "#/components/schemas/SBP",
+            "THAILAND_BANK": "#/components/schemas/THAILAND_BANK",
+            "USDTTRC20": "#/components/schemas/USDTTRC20",
+            "EUR_NETELLER": "#/components/schemas/EUR_NETELLER",
+            "YOTA": "#/components/schemas/YOTA",
+            "USDTERC20": "#/components/schemas/USDTERC20",
+            "BRBANK": "#/components/schemas/BRBANK",
+            "RUCARD": "#/components/schemas/RUCARD",
+            "ETH": "#/components/schemas/ETH",
+            "SOUTH_KOREA_BANK": "#/components/schemas/SOUTH_KOREA_BANK",
+            "MALAYSIA_BANK": "#/components/schemas/MALAYSIA_BANK",
+            "BEELINE": "#/components/schemas/BEELINE",
+            "ARBANK": "#/components/schemas/ARBANK",
+            "TMOBILE": "#/components/schemas/TMOBILE",
+            "USDCERC20": "#/components/schemas/USDCERC20",
+            "WORLDCARDUSD": "#/components/schemas/WORLDCARDUSD",
+            "RUCARDP2PDYN": "#/components/schemas/RUCARDP2PDYN",
+            "PAYTM": "#/components/schemas/PAYTM",
+            "KZCARD": "#/components/schemas/KZCARD",
+            "TELE2": "#/components/schemas/TELE2",
+            "PAYONEER": "#/components/schemas/PAYONEER",
+            "RUCARDP2P": "#/components/schemas/RUCARDP2P",
+            "INDONESIA_BANK": "#/components/schemas/INDONESIA_BANK",
+            "PAYONEER_USD": "#/components/schemas/PAYONEER_USD",
+            "MTS": "#/components/schemas/MTS",
+            "UKRCARD": "#/components/schemas/UKRCARD",
+            "GECARD": "#/components/schemas/GECARD"
+          }
+        }
+      },
+      "WORLDCARDEUR": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "cardCountry": {
+            "type": "string"
+          },
+          "addressCountryCode": {
+            "type": "string"
+          },
+          "addressCity": {
+            "type": "string"
+          },
+          "surname": {
+            "type": "string"
+          },
+          "cardCurrency": {
+            "type": "string"
+          },
+          "cardExpiryYear": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "cardExpiryMonth": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "name",
+          "surname",
+          "cardCurrency",
+          "birthDate",
+          "address",
+          "addressCountryCode",
+          "addressCity",
+          "cardExpiryMonth",
+          "cardExpiryYear",
+          "cardCountry",
+          "type"
+        ]
+      },
+      "GCashReceiver": {
+        "type": "object",
+        "properties": {
+          "surName": {
+            "type": "string"
+          },
+          "givName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "surName",
+          "givName",
+          "phone"
+        ]
+      },
+      "IMPS": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "account_name": {
+            "type": "string"
+          },
+          "bank_code": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "account_name",
+          "bank_code",
+          "type"
+        ]
+      },
+      "CreateConversionDocumentRestRequest": {
+        "type": "object",
+        "properties": {
+          "fromAccount": {
+            "type": "string"
+          },
+          "toAccount": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "fromAccount",
+          "toAccount",
+          "amount"
+        ]
+      },
+      "CreatePaymentIntegrationResponse": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "documentId"
+        ]
+      },
+      "TRCARD": {
+        "type": "object",
+        "properties": {
+          "beneficiaryFullname": {
+            "type": "string"
+          },
+          "senderIdentityNumber": {
+            "type": "string"
+          },
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "senderFullname": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "senderFullname",
+          "senderIdentityNumber",
+          "beneficiaryFullname",
+          "type"
+        ]
+      },
+      "WithdrawalStateResponse": {
+        "type": "object",
+        "properties": {
+          "userRequestId": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "accountFrom": {
+            "type": "string"
+          },
+          "callbackUrl": {
+            "type": "string"
+          },
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          },
+          "fee": {
+            "type": "number",
+            "format": "double"
+          },
+          "state": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "fee",
+          "documentId",
+          "amount",
+          "currency",
+          "type",
+          "accountFrom",
+          "payload",
+          "userRequestId",
+          "callbackUrl"
+        ]
+      },
+      "SimpleError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "GCashSender": {
+        "type": "object",
+        "properties": {
+          "purposeOfRemittance": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "purposeOfRemittance"
+        ]
+      },
+      "SBP": {
+        "type": "object",
+        "properties": {
+          "bankName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "bank": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "nspk": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "email",
+          "nspk",
+          "firstName",
+          "lastName",
+          "bank",
+          "bankName",
+          "type"
+        ]
+      },
+      "THAILAND_BANK": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/BankDestination"
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/BankRecipient"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "destination",
+          "recipient",
+          "type"
+        ]
+      },
+      "USDTTRC20": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "CreatePaymentIntegrationRequest": {
+        "type": "object",
+        "properties": {
+          "userRequestId": {
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/PaymentPayload"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "accountFrom": {
+            "type": "string"
+          },
+          "callbackUrl": {
+            "type": "string"
+          },
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "amount",
+          "accountFrom",
+          "payload",
+          "userRequestId",
+          "callbackUrl"
+        ]
+      },
+      "EUR_NETELLER": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "surname": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "client_ip": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "wallet_email": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "wallet_email",
+          "name",
+          "surname",
+          "country",
+          "city",
+          "address",
+          "zip",
+          "code",
+          "phone",
+          "client_ip",
+          "state",
+          "type"
+        ]
+      },
+      "YOTA": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "USDTERC20": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "BRBANK": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "additionalRemark": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "taxId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "taxId",
+          "name",
+          "email",
+          "additionalRemark",
+          "type"
+        ]
+      },
+      "RUCARD": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "cardCountry": {
+            "type": "string"
+          },
+          "surname": {
+            "type": "string"
+          },
+          "midname": {
+            "type": "string"
+          },
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "autosplit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "account",
+          "name",
+          "surname",
+          "midname",
+          "cardCountry",
+          "autosplit",
+          "type"
+        ]
+      },
+      "ETH": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "SOUTH_KOREA_BANK": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/BankDestination"
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/BankRecipient"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "destination",
+          "recipient",
+          "type"
+        ]
+      },
+      "MALAYSIA_BANK": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/BankDestination"
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/BankRecipient"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "destination",
+          "recipient",
+          "type"
+        ]
+      },
+      "BEELINE": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "ARBANK": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string",
+            "description": "beneficiary account id, alphanumeric - exact length depends on bank specifications / номер счета получателя, буквенно-цифровое, точная длина зависит от требований банка"
+          },
+          "taxId": {
+            "type": "string",
+            "description": "exactly 11 digits of the beneficiary's tax id / ровно 11 цифр налогового номера получателя"
+          },
+          "cbu": {
+            "type": "string",
+            "description": "a 22-digit numeric code used to identify and route money transfers / 22-значный цифровой код, используемый для идентификации и направления денежных переводов"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "taxId",
+          "cbu",
+          "type"
+        ],
+        "description": "Argentinian banks / банковские счета Аргентины"
+      },
+      "BankRecipient": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "zipCode": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName",
+          "email",
+          "phone",
+          "zipCode",
+          "city",
+          "address",
+          "country"
+        ]
+      },
+      "UZCARD": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "isUzCard": {
+            "type": "boolean"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "isUzCard",
+          "type"
+        ]
+      },
+      "TMOBILE": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "BankDestination": {
+        "type": "object",
+        "properties": {
+          "bankCode": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bankCode",
+          "accountName",
+          "accountNumber"
+        ]
+      },
+      "USDCERC20": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "WORLDCARDUSD": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "cardCountry": {
+            "type": "string"
+          },
+          "addressCountryCode": {
+            "type": "string"
+          },
+          "addressCity": {
+            "type": "string"
+          },
+          "surname": {
+            "type": "string"
+          },
+          "cardCurrency": {
+            "type": "string"
+          },
+          "cardExpiryYear": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "cardExpiryMonth": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "name",
+          "surname",
+          "cardCurrency",
+          "birthDate",
+          "address",
+          "addressCountryCode",
+          "addressCity",
+          "cardExpiryMonth",
+          "cardExpiryYear",
+          "cardCountry",
+          "type"
+        ]
+      },
+      "RUCARDP2PDYN": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "cardCountry": {
+            "type": "string"
+          },
+          "surname": {
+            "type": "string"
+          },
+          "midname": {
+            "type": "string"
+          },
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "name",
+          "surname",
+          "midname",
+          "cardCountry",
+          "type"
+        ]
+      },
+      "PAYTM": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "KZCARD": {
+        "type": "object",
+        "properties": {
+          "cardCountry": {
+            "type": "string"
+          },
+          "isKzCard": {
+            "type": "boolean"
+          },
+          "binCountry": {
+            "type": "string"
+          },
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "isKzCard",
+          "binCountry",
+          "cardCountry",
+          "type"
+        ]
+      },
+      "TELE2": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "PAYONEER": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "RUCARDP2P": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "cardCountry": {
+            "type": "string"
+          },
+          "surname": {
+            "type": "string"
+          },
+          "midname": {
+            "type": "string"
+          },
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "name",
+          "surname",
+          "midname",
+          "cardCountry",
+          "type"
+        ]
+      },
+      "INDONESIA_BANK": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/BankDestination"
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/BankRecipient"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "destination",
+          "recipient",
+          "type"
+        ]
+      },
+      "PAYONEER_USD": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "ShortAccount": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "balance": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "number",
+          "currency",
+          "name",
+          "balance"
+        ]
+      },
+      "MTS": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "type"
+        ]
+      },
+      "UKRCARD": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "autosplit": {
+            "type": "boolean"
+          },
+          "cardCountry": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "autosplit",
+          "cardCountry",
+          "type"
+        ]
+      },
+      "GECARD": {
+        "type": "object",
+        "properties": {
+          "receiverFirstname": {
+            "type": "string"
+          },
+          "senderIdentityNumber": {
+            "type": "string"
+          },
+          "account": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "receiverLastname": {
+            "type": "string"
+          },
+          "senderLastname": {
+            "type": "string"
+          },
+          "senderFirstname": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "senderFirstname",
+          "senderLastname",
+          "senderIdentityNumber",
+          "receiverFirstname",
+          "receiverLastname",
+          "type"
+        ]
+      }
+    }
+  }
+}

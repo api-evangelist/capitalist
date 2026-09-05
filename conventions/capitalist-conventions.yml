@@ -1,0 +1,223 @@
+generated: '2026-09-05'
+method: searched
+source: >-
+  https://docs.capitalist.net/api/integration-api.html (sections 4-9) plus the
+  first-party OpenAPI at
+  https://github.com/capitalist-net/API-V2/blob/main/java-client/api-definition/Integration+API.json
+provider: Capitalist
+providerId: capitalist
+description: >-
+  Cross-cutting request/response semantics for the Capitalist Integration API
+  (v2) at https://api2.capitalist.net. These are the runtime rules an agent
+  needs that the published OpenAPI does not express: how requests are signed,
+  what stops a duplicate payout, how a payout can (and cannot) be reversed, how
+  lists are paged, what an error looks like, and what throttling to expect.
+
+base_url: https://api2.capitalist.net
+api_style: REST over HTTPS, JSON request and response bodies
+
+authentication:
+  scheme: Signed API key — API-Key + X-Request-Timestamp + Signature headers
+  signature: sha256_hex(X-Request-Timestamp + request_body + API-secret)
+  docs: https://docs.capitalist.net/api/integration-api.html
+  detail: authentication/capitalist-authentication.yml
+
+idempotency:
+  supported: true
+  coverage: partial
+  mechanism: >-
+    Client-supplied userRequestId field in the POST /v1/payment request body.
+    The provider's Best Practices section states: "Implement idempotency - Use
+    unique userRequestId for each transaction to prevent duplicates". The same
+    identifier is the lookup key for GET /v1/payment/{userRequestId}, so a
+    client that is unsure whether a create succeeded can read the outcome back
+    rather than retrying blind.
+  scope:
+    - POST /v1/payment
+  not_covered:
+    - POST /v1/exchange
+    - POST /v1/whitelist
+    - POST /v1/whitelist/remove
+    - POST /v1/kyc/start
+    - POST /v1/kyc/setData/{uuid}
+    - POST /v1/kyc/setPicture/{uuid}/{type}
+    - POST /v1/kyc/confirm/{uuid}
+  header: null
+  key_format: Client-generated unique string (the docs show millisecond epoch values).
+  retention: Not documented.
+  conflict_behavior: >-
+    Not documented. The docs say a unique userRequestId prevents duplicates but
+    do not state what is returned when a duplicate id is submitted, nor for how
+    long the mapping is retained.
+  note: >-
+    coverage is `partial`, not `full`: the mechanism is a body field on ONE
+    mutating operation (payment creation), not a header honoured across the
+    mutating surface. POST /v1/exchange — which moves money between accounts —
+    carries no replay protection at all in the published contract.
+  docs: https://docs.capitalist.net/api/integration-api.html
+
+reversibility:
+  grade: none
+  summary: >-
+    The published Integration API has NO reversal operation. There is no cancel,
+    void, refund, reverse or undo endpoint in the first-party OpenAPI (6 paths)
+    or in the documented endpoint list (sections 3-4, 20 endpoints). Once
+    POST /v1/payment returns a documentId the payment proceeds to a terminal
+    state of EXECUTED or DECLINED with no client-callable path back.
+  write_surfaces:
+    - operation: POST /v1/payment
+      effect: Creates an outbound payout to an external payment channel.
+      reversal: none
+      window: null
+      note: >-
+        Terminal states are EXECUTED and DECLINED (PENDING while in flight). The
+        docs describe a "Payment return (Wire)" and a "Search for incorrect
+        payment" as chargeable manual support services on
+        https://capitalist.net/fees — a human ticket, not an API operation, and
+        no time window is stated. Do not treat that as an API reversal path.
+    - operation: POST /v1/exchange
+      effect: Converts funds between two of the account's own currency accounts.
+      reversal: none
+      window: null
+      note: >-
+        A converse exchange in the opposite direction is possible but is a new
+        priced conversion at the then-current rate, not a reversal of the
+        original.
+    - operation: POST /v1/whitelist / POST /v1/whitelist/remove
+      effect: Adds or removes IP addresses from the API allowlist.
+      reversal: POST /v1/whitelist/remove reverses POST /v1/whitelist, and vice versa.
+      window: unbounded
+      note: >-
+        This is the only genuinely reversible pair in the surface, and it is a
+        configuration operation, not a money movement.
+    - operation: POST /v1/kyc/start
+      effect: Starts a KYC case for an end user.
+      reversal: none
+      window: null
+      note: >-
+        Documented as destructive-by-supersession: "Starting a new KYC for the
+        same kycExternalUserId makes current KYC obsolete." There is no undo.
+  agent_guidance: >-
+    Treat every POST /v1/payment as irreversible. The only pre-flight controls
+    the provider offers are the account-level IP allowlist, the per-channel
+    payload validation rules in section 6, and the provider's own advice to
+    "test with small amounts first". There is no dry-run or simulation mode.
+  docs: https://docs.capitalist.net/api/integration-api.html
+
+dry_run_mode:
+  supported: false
+  note: >-
+    No sandbox, test mode, test key prefix or simulation endpoint is published.
+    The provider's stated integration practice is to send small real amounts.
+
+pagination:
+  style: offset
+  applies_to:
+    - GET /v1/orders
+    - GET /v1/transactions
+  request_params:
+    limit: Maximum records returned. Default 100.
+    offset: Records to skip. Default 0.
+  response_fields:
+    orders / transactions: array of results
+    count: total number of matching records
+  filters:
+    periodStart: ISO 8601 date, start of window
+    periodEnd: ISO 8601 date, end of window
+  note: >-
+    Neither list operation appears in the published OpenAPI (which carries only
+    6 of the ~20 documented paths), so these parameters are documented-only.
+  docs: https://docs.capitalist.net/api/integration-api.html
+
+field_expansion:
+  supported: false
+
+metadata:
+  supported: partial
+  mechanism: >-
+    A free-text `comment` field on POST /v1/payment, echoed back on the payment
+    status response and on the callback body. There is no structured key/value
+    metadata map.
+
+request_tracing:
+  request_id_header: null
+  client_correlation_id: userRequestId (client-supplied, echoed on reads and callbacks)
+  document_id: documentId (server-assigned int64, returned by POST /v1/payment)
+  note: >-
+    The API returns no server request-id header. Correlation is done through the
+    client's own userRequestId or the server's documentId.
+
+versioning:
+  scheme: Path-prefixed major version on a separate host
+  current: v2 Integration API — https://api2.capitalist.net/v1/...
+  previous: v1 Payments API — https://api.capitalist.net (single POST endpoint, operation selector)
+  note: >-
+    The v2 host is api2.capitalist.net while its paths are prefixed /v1/ — the
+    host carries the product generation and the path prefix carries the route
+    version. The older generation self-reports "API version 1.9.8" in its
+    non-POST error string.
+  detail: lifecycle/capitalist-lifecycle.yml
+  docs: https://docs.capitalist.net/api/integration-api.html
+
+error_envelope:
+  media_type: application/json
+  rfc9457: false
+  shape: '{ "error": "Error description message" }'
+  schema: SimpleError (components.schemas.SimpleError in the first-party OpenAPI)
+  status_codes:
+    '200': Success — request processed successfully
+    '400': Bad Request — invalid parameters or validation error
+    '401': 'Observed live on an unauthenticated call: plain-text body "Missing `API-Key`" (not the JSON envelope)'
+  note: >-
+    The documented status table lists only 200 and 400. A 401 with a bare
+    text/plain body was observed on an anonymous probe of GET /v1/rate on
+    2026-09-05, so the envelope is not uniform across the auth boundary.
+  detail: errors/capitalist-problem-types.yml
+  docs: https://docs.capitalist.net/api/integration-api.html
+
+rate_limits:
+  signal_status: not documented
+  headers: none published; none observed on live responses
+  published_limit: >-
+    Transaction-status polling above 20 requests per minute is discouraged in
+    favour of callbacks; transaction CREATION is stated to be unrestricted.
+    Excessively frequent calls are automatically throttled.
+  detail: rate-limits/capitalist-rate-limits.yml
+  docs: https://docs.capitalist.net/api/integration-api.html
+
+webhooks:
+  supported: true
+  registration: Per-request — a callbackUrl field on POST /v1/payment and POST /v1/kyc/start
+  signing_headers: [X-Request-Timestamp, Signature]
+  verification: sha256_hex(X-Request-Timestamp + raw body + API secret), compared to the Signature header
+  delivery: POST, fired when a final status is reached
+  detail: asyncapi/capitalist-webhooks.yml
+  docs: https://docs.capitalist.net/api/integration-api.html
+
+other_conventions:
+  - name: Amounts
+    detail: Decimal numbers in major currency units (e.g. 100.00 USD), not minor units.
+  - name: Timestamps
+    detail: ISO 8601 strings in response bodies; epoch milliseconds in the X-Request-Timestamp header.
+  - name: Currency codes
+    detail: >-
+      Non-ISO codes are used for the Russian rouble (RUR, not RUB) and to
+      disambiguate stablecoin networks — USDT (ERC-20), USDTt (TRC-20), USDTb
+      (BEP-20), USDC (ERC-20), USDCb (BEP-20).
+  - name: Payment channel discriminator
+    detail: >-
+      The payload.type field selects one of ~45 channel schemas (RUCARD,
+      PAYONEER, SBP, BITCOIN, ...), each with its own required fields. The
+      OpenAPI models this as a oneOf over the PaymentPayload schema.
+  - name: Crypto deposit addresses are ephemeral
+    detail: >-
+      Addresses from GET /v1/depositAddress/{currency} are guaranteed valid for
+      at most 8 hours and must not be cached or persisted.
+  - name: Channel availability is not guaranteed
+    detail: >-
+      The docs warn that not all documented payment channels may be currently
+      available; there is no published capability-discovery endpoint.
+
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

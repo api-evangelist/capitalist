@@ -1,0 +1,194 @@
+generated: '2026-09-05'
+method: searched
+source: https://docs.capitalist.net/api/integration-api.html
+provider: Capitalist
+providerId: capitalist
+description: >-
+  Request and response examples for the Capitalist Integration API, transcribed
+  verbatim from the provider's own documentation. The published OpenAPI carries
+  no examples at all, so these are the only worked payloads Capitalist offers.
+  Values are the provider's placeholders (U0123504, somePrivateApiSecret,
+  some-domain.com) — none is a live credential and none was invented here.
+base_url: https://api2.capitalist.net
+examples:
+  - operation: Signature calculation
+    section: '2.2'
+    inputs:
+      X-Request-Timestamp: '1678901234567'
+      request_body: '{"type":"PAYONEER","accountFrom":"U0123504","payload":{"account":"user@example.com"},"userRequestId":"1745844029437","callbackUrl":"https://some-domain.com/callbacksFromCap","amount":100}'
+      api_secret: somePrivateApiSecret
+    formula: 'rawString = X-Request-Timestamp + requestBody + API-secret; Signature = sha256Hex(rawString)'
+    result_header: 'Signature: 2eec8f9fcedae5de9a4ebba8e4ef393ece034a1a14a28a51ee34812311e5b516'
+    note: >-
+      The e-mail in the documented body is redacted in the published HTML; the
+      placeholder above stands in for it. The published digest is the provider's
+      own worked answer and can be used as a self-test vector only against the
+      exact original string.
+
+  - operation: GET /v1/whitelist
+    section: '3.1'
+    response: '["12.12.11.14"]'
+
+  - operation: POST /v1/whitelist
+    section: '3.2'
+    request:
+      ip: ['12.12.11.14']
+
+  - operation: POST /v1/whitelist/remove
+    section: '3.3'
+    request:
+      ip: ['127.0.0.*', '127.0.0.1']
+
+  - operation: GET /v1/account/list
+    section: '4.1.1'
+    request_params:
+      currency: USD
+    response:
+      - number: U0123504
+        currency: USD
+        name: Main Account
+        balance: 1250.50
+
+  - operation: POST /v1/exchange
+    section: '4.2.1'
+    request:
+      fromAccount: U0123504
+      toAccount: E0123505
+      amount: 100.00
+    response: 'null'
+    note: Returns null on success.
+
+  - operation: GET /v1/rate
+    section: '4.3.1'
+    request_params:
+      from: USD
+      to: EUR
+    response: '1.0842'
+    note: The response body is a bare JSON number, not an object.
+
+  - operation: POST /v1/payment
+    section: '4.4.1'
+    request:
+      userRequestId: string
+      accountFrom: string
+      amount: 0.1
+      currency: string
+      comment: string
+      callbackUrl: string
+      payload:
+        type: SOME_BANK_TYPE
+        account: string
+        taxId: string
+        cbu: string
+    response:
+      documentId: 9007199254740991
+
+  - operation: GET /v1/payment/document/{documentId}
+    section: '4.4.2'
+    response:
+      state: EXECUTED
+      fee: 1.12
+      documentId: 123
+      comment: Own funds
+      amount: 100.00
+      currency: USD
+      type: PAYONEER
+      accountFrom: U0123504
+      payload: '{"account":"user@example.com","type":"PAYONEER"}'
+      userRequestId: '9876543219'
+      callbackUrl: https://some-domain.com/for-callbacks
+    note: >-
+      payload comes back as a JSON-encoded STRING, not a nested object — a real
+      shape difference between the create request and the read response.
+
+  - operation: GET /v1/orders
+    section: '4.5.1'
+    response:
+      orders:
+        - merchantId: 163
+          number: utorg0012
+          creationDate: '2020-08-31T18:49:23.670Z'
+          description: My demo payment.
+          currency: BTC
+          state: PAID
+          amount: 0.00161283
+          paidAmount: 0.00161283
+          cryptoCurrency: BTC
+          orderId: 800000012
+      count: 123
+
+  - operation: GET /v1/transactions
+    section: '4.6.1'
+    response:
+      transactions:
+        - transactionId: 8367664
+          createDate: '2014-02-18T21:47:29.452Z'
+          executeDate: '2014-02-18T21:47:39.543Z'
+          type: OUT
+          state: EXECUTED
+          amount: 500.00000000
+          currency: USD
+          planDate: '2014-02-18T21:21:53.314Z'
+          version: 1
+          txId: 652786b90e4538e1e7bf942a603fd5bb452ef84e18c98dac62d8ce5c64409201
+      count: 123
+
+  - operation: GET /v1/depositAddress/{currency}
+    section: '4.7.1'
+    response:
+      address: some your address
+    note: Valid for at most 8 hours; the docs forbid caching it.
+
+  - operation: POST /v1/kyc/start
+    section: '4.8.1'
+    request:
+      kycExternalUserId: string
+      callbackUrl: string
+      sort: string
+    response:
+      urlForUser: https://somewhere.to/someuuid
+      uuid: a-b-c
+
+  - operation: GET /v1/kyc/status/{kycExternalUserId}/{sort}
+    section: '4.8.2'
+    response:
+      kycExternalUserId: some your user unique id
+      status: FAILED
+      reason: photo is dirty
+      uuid: a-b-c
+
+  - operation: Payment callback body
+    section: '5.3'
+    direction: inbound-to-integrator
+    headers: [X-Request-Timestamp, Signature]
+    body:
+      state: EXECUTED
+      fee: 1.12
+      documentId: 123
+      comment: Own funds
+      amount: 100.00
+      currency: USD
+      type: PAYONEER
+      accountFrom: U0123504
+      userRequestId: '9876543219'
+      callbackUrl: https://some-domain.com/for-callbacks
+
+payment_channel_payloads:
+  description: >-
+    Documented example payloads for the payment channels, section 6. Each one is
+    the value of the `payload` object on POST /v1/payment.
+  examples:
+    - type: RUCARD
+      section: '6.1.1'
+      payload: {type: RUCARD, name: Ivan, account: '1234567890123456', surname: Petrov, midname: Sergeevich}
+    - type: RUCARDP2P
+      section: '6.1.2'
+      payload: {type: RUCARDP2P, account: '1234567890123456', name: Ivan, surname: Petrov, midname: Sergeevich}
+    - type: PAYONEER
+      section: '6.5.1'
+      payload: {type: PAYONEER, account: user@example.com}
+      note: Account value is redacted in the published page; the placeholder stands in for it.
+
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

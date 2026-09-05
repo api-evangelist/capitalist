@@ -1,0 +1,155 @@
+generated: '2026-09-05'
+method: searched
+source: >-
+  https://docs.capitalist.net/api/integration-api.html section 7 (Error
+  Handling), the SimpleError schema in
+  https://github.com/capitalist-net/API-V2/blob/main/java-client/api-definition/Integration+API.json,
+  and live anonymous probes of api2.capitalist.net and api.capitalist.net on
+  2026-09-05.
+provider: Capitalist
+providerId: capitalist
+description: >-
+  Error semantics for both Capitalist API generations. Neither uses RFC 9457
+  problem+json. The v2 Integration API returns a single-field JSON object; the
+  deprecated v1 API returns either a semicolon-delimited code;"message" line or,
+  when x-response-format=json is requested, a {code,message,data} envelope.
+  Capitalist publishes no enumerated error-code registry for v2 and no
+  decline-code reference for failed payouts, which is the largest gap in its
+  error surface.
+
+format: custom-json
+rfc9457: false
+
+apis:
+  - name: Capitalist Integration API (v2)
+    base_url: https://api2.capitalist.net
+    envelope:
+      media_type: application/json
+      schema: SimpleError
+      shape: '{ "error": "Error description message" }'
+      fields:
+        error:
+          type: string
+          required: true
+          description: Human-readable description of what went wrong. Not a stable machine code.
+    status_codes:
+      - code: 200
+        title: Success
+        description: Request processed successfully.
+        documented: true
+      - code: 400
+        title: Bad Request
+        description: Invalid parameters or validation error.
+        body: '{ "error": "..." }'
+        documented: true
+        applies_to:
+          - GET /v1/account/list
+          - POST /v1/exchange
+          - GET /v1/rate
+          - POST /v1/payment
+          - GET /v1/payment/document/{documentId}
+          - GET /v1/payment/{userRequestId}
+      - code: 401
+        title: Unauthorized
+        description: >-
+          Authentication headers missing or invalid. Observed live, NOT in the
+          provider's documented status table.
+        body: 'Missing `API-Key`'
+        media_type: text/plain
+        documented: false
+        evidence:
+          url: https://api2.capitalist.net/v1/rate?from=USD&to=EUR
+          status: 401
+          checked: '2026-09-05'
+    gaps:
+      - No enumerated error-code registry; `error` is free text, so a client
+        cannot branch on a stable identifier.
+      - No 401/403/429/5xx entries in the documented status table even though 401
+        is served in practice.
+      - No decline-code reference. A failed payout surfaces only as
+        state=DECLINED on the payment status response and callback body, with no
+        published reason taxonomy, so an agent cannot distinguish a retryable
+        failure from a permanent one.
+      - IP-allowlist rejection behaviour (section 3) has no documented status code.
+
+  - name: Capitalist Payments API (v1, deprecated)
+    base_url: https://api.capitalist.net
+    envelope:
+      default:
+        media_type: text/plain
+        shape: '<code>;"<message>"'
+        note: >-
+          First line carries the outcome; subsequent lines carry operation data
+          in plain text, CSV or XML depending on the requested format.
+      json:
+        media_type: application/json
+        shape: '{ "code": <int>, "message": "<string>", "data": <object|array> }'
+        note: Returned when the x-response-format request header is set to json.
+    observed_codes:
+      - code: 150
+        message: 'Получен не POST-запрос. (Версия API: 1.9.8, https://capitalist.net/developers/api)'
+        message_en: Received a non-POST request. (API version 1.9.8)
+        transport: 'text/plain, semicolon form'
+        evidence:
+          url: https://api.capitalist.net/
+          method: GET
+          status: 200
+          checked: '2026-09-05'
+      - code: 4
+        message: Только x-response-format=json доступен.
+        message_en: Only x-response-format=json is available.
+        transport: application/json
+        evidence:
+          url: https://api.capitalist.net/
+          method: POST
+          status: 200
+          checked: '2026-09-05'
+      - code: 1
+        message: Системная ошибка
+        message_en: System error
+        transport: 'both; validation detail is carried in data.errors keyed by field name'
+        example_data:
+          errors:
+            login: [Необходимо указать логин.]
+            encrypted_password: [Необходимо указать пароль.]
+            token: [Необходимо указать токен.]
+        evidence:
+          url: https://api.capitalist.net/
+          method: POST
+          status: 200
+          checked: '2026-09-05'
+    note: >-
+      v1 returns HTTP 200 for application-level errors and carries the outcome in
+      the body, so HTTP status alone is not a success signal on this surface.
+
+payment_states:
+  description: >-
+    Not errors, but the failure signal an integrator actually consumes. Carried
+    in the `state` field of the payment status response and the callback body.
+  values:
+    - value: PENDING
+      terminal: false
+    - value: EXECUTED
+      terminal: true
+      outcome: success
+    - value: DECLINED
+      terminal: true
+      outcome: failure
+      note: No published reason code or decline taxonomy accompanies this state.
+  docs: https://docs.capitalist.net/api/integration-api.html
+
+kyc_states:
+  values: [INITIATED, OPENED, COMPLETED, APPROVED, DECLINED, EXPIRED]
+  reason_field: reason (optional free-text explanation, e.g. "photo is dirty")
+  docs: https://docs.capitalist.net/api/integration-api.html
+
+order_states:
+  values: [NEW, PARTIALLYPAID, PAID, FAIL, REFUND, CHARGEBACK, CANCELLED]
+  note: >-
+    Merchant order states, read-only via GET /v1/orders. REFUND and CHARGEBACK
+    appear as observable states only — no API operation initiates either.
+  docs: https://docs.capitalist.net/api/integration-api.html
+
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

@@ -1,0 +1,115 @@
+generated: '2026-09-05'
+method: searched
+source: >-
+  https://docs.capitalist.net/api/integration-api.html,
+  https://capitalist.net/developers/api and the provider's own deprecated-v1
+  documentation route https://capitalist.net/developers/deprecated/v1/api
+provider: Capitalist
+providerId: capitalist
+description: >-
+  Version, deprecation and operational-signal posture for the Capitalist API
+  estate. Capitalist has two live generations: the current Integration API (v2)
+  on api2.capitalist.net, and a v1 Payments API on api.capitalist.net that the
+  provider has moved under a URL path literally named "deprecated". There is no
+  status page, no SLA, and no dated public changelog.
+
+versioning:
+  scheme: Generation-per-host, with a /v1/ route prefix inside the current generation
+  current:
+    name: Integration API (v2)
+    base_url: https://api2.capitalist.net
+    route_prefix: /v1/
+    docs: https://docs.capitalist.net/api/integration-api.html
+    docs_last_updated: '2026-07-16'
+    contract: openapi/capitalist-integration-api-openapi.json
+    contract_version: '1.0'
+  previous:
+    name: Payments API (v1)
+    base_url: https://api.capitalist.net
+    self_reported_version: 1.9.8
+    docs: https://capitalist.net/developers/deprecated/v1/api
+    contract: openapi/capitalist-capitalist-payments-api-api-openapi.yml
+  headers:
+    request: none — no version header is accepted
+    response: none — no version header is returned
+
+deprecation:
+  policy_published: false
+  status: >-
+    Capitalist signals deprecation by relocation, not by policy. The v1
+    documentation now lives at /developers/deprecated/v1/api, and the current
+    developer page states "If you are using an older version of the API, you can
+    find the documentation at the link /developers/deprecated/v1/api". No sunset
+    date, no migration deadline, and no support window are published.
+  deprecated_surfaces:
+    - name: Capitalist Payments API (v1)
+      base_url: https://api.capitalist.net
+      still_serving: true
+      evidence:
+        url: https://api.capitalist.net/
+        status: 200
+        note: 'Answers live; GET returns 150;"Received a non-POST request. (API version 1.9.8)". Probed 2026-09-05.'
+      docs: https://capitalist.net/developers/deprecated/v1/api
+      sunset_date: null
+      migration_guide: null
+  rfc8594:
+    sunset_header: false
+    deprecation_header: false
+    note: >-
+      No Sunset or Deprecation response headers observed on either host
+      (checked 2026-09-05).
+  deprecated_operations_in_spec: []
+  note: >-
+    Neither published OpenAPI marks any operation `deprecated: true`. The
+    deprecation is at the whole-API level and is expressed only in prose and in
+    the documentation URL path.
+
+status_page:
+  published: false
+  probes:
+    - url: https://status.capitalist.net
+      status: 000
+      note: Host does not resolve. Probed 2026-09-05.
+  runtime_signal:
+    header: x-capitalist-maintenance
+    observed_value: 'false'
+    source: https://api.capitalist.net/
+    checked: '2026-09-05'
+    note: >-
+      The v1 API returns an x-capitalist-maintenance response header. It is a
+      per-response maintenance flag, not a public status page, and it is not
+      documented.
+
+sla:
+  published: false
+  note: >-
+    No uptime commitment, latency target or credit schedule is published for
+    either API generation. Merchant terms are described as individually
+    negotiated ("Final rates for receiving funds and payments are agreed upon
+    after a detailed study of the type of activity and category of the
+    Merchant", https://capitalist.net/fees).
+
+changelog:
+  published: false
+  note: >-
+    No dated API changelog. The Integration API documentation page carries a
+    single "Last updated 2026-07-16 14:27:48 UTC" stamp, and
+    https://capitalist.net/news is a company news feed rather than an API
+    release log.
+  evidence:
+    - url: https://docs.capitalist.net/api/integration-api.html
+      status: 200
+      note: Footer stamp "Last updated 2026-07-16 14:27:48 UTC".
+
+support:
+  channel: In-account support ticket
+  note: >-
+    Section 11 of the Integration API documentation: "For technical support and
+    questions about the API integration, please contact support through your
+    personal account." No public developer forum, mailing list or issue tracker
+    for the API itself; the GitHub org accepts issues on the sample repos.
+  url: https://capitalist.net/support
+
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

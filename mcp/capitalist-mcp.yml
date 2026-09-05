@@ -1,0 +1,107 @@
+generated: '2026-09-05'
+method: derived
+source: >-
+  Derived from openapi/capitalist-integration-api-openapi.json and
+  https://docs.capitalist.net/api/integration-api.html after searching for a
+  published server and finding none.
+provider: Capitalist
+providerId: capitalist
+status: candidate
+description: >-
+  Capitalist publishes NO MCP server — hosted or local. This file records a
+  CANDIDATE tool surface derived from the provider's own contract so the gap is
+  legible; it is not a server that exists, and no endpoint is asserted. Nothing
+  here should be presented to an agent as callable.
+search_record:
+  hosted_server: none found
+  stdio_package: none found
+  probes:
+    - {url: 'https://capitalist.net/.well-known/ai-plugin.json', status: 404}
+    - {url: 'https://api2.capitalist.net/.well-known/ai-plugin.json', status: 404}
+    - {url: 'https://api.capitalist.net/.well-known/ai-plugin.json', status: 404}
+    - {url: 'https://capitalist.net/llms.txt', status: 404}
+  registries_checked:
+    - 'npm (registry.npmjs.org) — no @capitalist* or capitalist MCP package'
+    - 'GitHub org https://github.com/capitalist-net — 5 public repos, none MCP-related'
+  checked: '2026-09-05'
+
+deployment:
+  mode: none
+  endpoint: null
+  install: null
+  package: null
+  auth: unknown
+  verified: derived
+  note: >-
+    mode is `none` because nobody ships a server. The auth an eventual server
+    would need is the signed-API-key scheme (API-Key + X-Request-Timestamp +
+    Signature), which is not one of the enumerated auth values, so `unknown` is
+    recorded rather than forcing api-key.
+
+candidate_tools:
+  - name: list_accounts
+    description: List the account's currency balances, optionally filtered by currency.
+    rest: GET /v1/account/list
+    consequence: read
+  - name: get_exchange_rate
+    description: Get the current exchange rate between two currency codes.
+    rest: GET /v1/rate
+    consequence: read
+  - name: get_payment_status
+    description: Read the state, fee and details of a payment by its documentId.
+    rest: GET /v1/payment/document/{documentId}
+    consequence: read
+  - name: get_payment_status_by_request_id
+    description: Read the state, fee and details of a payment by the client's userRequestId.
+    rest: GET /v1/payment/{userRequestId}
+    consequence: read
+  - name: list_transactions
+    description: List ledger transactions with date-range and paging filters.
+    rest: GET /v1/transactions
+    consequence: read
+    note: Documented endpoint; not present in the published OpenAPI.
+  - name: list_orders
+    description: List merchant orders with date-range, merchant and paging filters.
+    rest: GET /v1/orders
+    consequence: read
+    note: Documented endpoint; not present in the published OpenAPI.
+  - name: get_crypto_deposit_address
+    description: Get an ephemeral deposit address for a supported cryptocurrency.
+    rest: GET /v1/depositAddress/{currency}
+    consequence: read
+    note: Address is valid for at most 8 hours and must not be cached.
+  - name: read_ip_whitelist
+    description: Read the IP allowlist that gates API access.
+    rest: GET /v1/whitelist
+    consequence: read
+  - name: get_kyc_status
+    description: Read the current status of a KYC case.
+    rest: GET /v1/kyc/statusByUuid/{uuid}
+    consequence: read
+  - name: exchange_currency
+    description: Convert funds between two of the account holder's own accounts.
+    rest: POST /v1/exchange
+    consequence: irreversible-write
+    note: >-
+      No reversal operation and no idempotency key. Would require explicit
+      confirmation in any agent surface.
+  - name: create_payment
+    description: Create an outbound payout to one of ~45 payment channels.
+    rest: POST /v1/payment
+    consequence: irreversible-write
+    note: >-
+      Moves real money to a third party with no cancel, void or refund
+      operation. userRequestId is the only duplicate guard. Any MCP exposure of
+      this operation needs a human-in-the-loop gate.
+
+not_emitted:
+  tool_crosswalk: >-
+    mcp/capitalist-tool-crosswalk.yml is deliberately absent. The crosswalk
+    exists to record divergence between a real MCP (or GraphQL) surface and the
+    REST contract. Capitalist has neither, so a crosswalk here would be a table
+    of our own candidate names mapped to the operations we invented them from —
+    a tautology, not a measurement.
+
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

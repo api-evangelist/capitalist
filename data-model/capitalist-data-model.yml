@@ -1,0 +1,173 @@
+generated: '2026-09-05'
+method: derived
+source: >-
+  openapi/capitalist-integration-api-openapi.json ($ref graph and id-reference
+  fields), enriched from https://docs.capitalist.net/api/integration-api.html
+  for the entities the spec omits (orders, transactions, deposit addresses, KYC).
+provider: Capitalist
+providerId: capitalist
+description: >-
+  Entity graph for the Capitalist Integration API. The core is a Payment
+  document identified by two keys at once — the server's documentId and the
+  client's userRequestId — drawn from an Account and shaped by exactly one of
+  ~45 channel-specific PaymentPayload variants. There are no nested resource
+  paths and no hypermedia links; every relationship is expressed as an
+  identifier field a client must carry itself.
+
+id_conventions:
+  - entity: Account
+    field: number
+    format: 'Letter-prefixed numeric string, e.g. U0123504 (USD), E0123505 (EUR)'
+    note: >-
+      The prefix letter tracks the account currency in the documented examples
+      (U for USD, E for EUR). The provider does not document the prefix scheme,
+      so do not parse currency from it — read the `currency` field.
+  - entity: Payment
+    field: documentId
+    format: int64
+    note: Server-assigned on POST /v1/payment.
+  - entity: Payment
+    field: userRequestId
+    format: Client-supplied unique string
+    note: Doubles as the idempotency key and as an alternate lookup key.
+  - entity: KycCase
+    field: uuid
+    format: UUID
+  - entity: KycCase
+    field: kycExternalUserId
+    format: Client-supplied unique end-user id
+  - entity: Transaction
+    field: transactionId
+    format: number
+  - entity: Order
+    field: orderId / number
+    format: 'number / merchant-scoped string, e.g. utorg0012'
+
+entities:
+  - name: Account
+    schema: ShortAccount
+    description: A currency-denominated balance inside the Capitalist account.
+    fields: [number, currency, name, balance]
+    operations:
+      - GET /v1/account/list
+
+  - name: Payment
+    schema: 'CreatePaymentIntegrationRequest / CreatePaymentIntegrationResponse / WithdrawalStateResponse'
+    description: >-
+      An outbound payout document. Created with a channel payload, then read
+      back by either key, and echoed to a callbackUrl when it reaches a terminal
+      state.
+    fields: [documentId, userRequestId, accountFrom, amount, currency, comment, callbackUrl, payload, type, fee, state, txId, dstAddress]
+    states: [PENDING, EXECUTED, DECLINED]
+    operations:
+      - POST /v1/payment
+      - GET /v1/payment/document/{documentId}
+      - GET /v1/payment/{userRequestId}
+
+  - name: PaymentPayload
+    schema: PaymentPayload
+    description: >-
+      A oneOf discriminated by the `type` field, selecting one of ~45
+      payment-channel schemas. The variant decides which recipient fields are
+      required.
+    variant_count: 45
+    variants:
+      cards: [RUCARD, RUCARDP2P, RUCARDP2PDYN, UKRCARD, TRCARD, GECARD, AZCARD, KZCARD, UZCARD, WORLDCARDEUR, WORLDCARDUSD]
+      banks: [ARBANK, BRBANK, COBANK, MALAYSIA_BANK, INDONESIA_BANK, THAILAND_BANK, SOUTH_KOREA_BANK]
+      mobile: [MEGAFON, TMOBILE, BEELINE, MTS, TELE2, YOTA, UKR_MOBILE]
+      fast_payment_systems: [SBP, IMPS]
+      wallets: [PAYONEER, PAYONEER_EUR, PAYONEER_USD, EUR_NETELLER, EUR_SKRILL, PAYTM, GCASH, QIWI, YANDEX]
+      crypto: [BITCOIN, ETH, USDCERC20, USDTERC20, USDTTRC20]
+    helper_schemas: [BankRecipient, BankDestination, GCashSender, GCashReceiver]
+
+  - name: Conversion
+    schema: CreateConversionDocumentRestRequest
+    description: A currency exchange between two of the account holder's own accounts.
+    fields: [fromAccount, toAccount, amount]
+    operations:
+      - POST /v1/exchange
+    note: Returns null on success — no document id, so a conversion cannot be looked up afterwards by its own key.
+
+  - name: Rate
+    description: A scalar exchange rate between two currency codes.
+    fields: [from, to]
+    returns: number
+    operations:
+      - GET /v1/rate
+
+  - name: Transaction
+    description: A ledger entry on the account, readable as a filtered list.
+    fields: [transactionId, createDate, executeDate, type, state, amount, currency, planDate, version, txId, dstAddress]
+    operations:
+      - GET /v1/transactions
+    note: Documented only; absent from the published OpenAPI.
+
+  - name: Order
+    description: A merchant order (inbound collection), readable as a filtered list.
+    fields: [merchantId, number, creationDate, description, currency, cryptoCurrency, state, amount, paidAmount, orderId]
+    states: [NEW, PARTIALLYPAID, PAID, FAIL, REFUND, CHARGEBACK, CANCELLED]
+    operations:
+      - GET /v1/orders
+    note: Documented only; absent from the published OpenAPI.
+
+  - name: DepositAddress
+    description: >-
+      An ephemeral cryptocurrency receive address. Guaranteed valid for at most
+      8 hours and explicitly must not be cached.
+    fields: [address]
+    operations:
+      - GET /v1/depositAddress/{currency}
+      - GET /v1/depositAddressAutoUSDTt/{account}
+    note: Documented only; absent from the published OpenAPI.
+
+  - name: KycCase
+    description: An end-user identity verification case.
+    fields: [kycExternalUserId, sort, uuid, status, reason, urlForUser, callbackUrl]
+    states: [INITIATED, OPENED, COMPLETED, APPROVED, DECLINED, EXPIRED]
+    operations:
+      - POST /v1/kyc/start
+      - GET /v1/kyc/status/{kycExternalUserId}/{sort}
+      - GET /v1/kyc/statusByUuid/{uuid}
+      - POST /v1/kyc/setData/{uuid}
+      - POST /v1/kyc/setPicture/{uuid}/{type}
+      - POST /v1/kyc/confirm/{uuid}
+    note: Documented only; absent from the published OpenAPI.
+
+  - name: IpWhitelistEntry
+    description: An IP address or last-octet wildcard permitted to call the API.
+    fields: [ip]
+    operations:
+      - GET /v1/whitelist
+      - POST /v1/whitelist
+      - POST /v1/whitelist/remove
+    note: Documented only; absent from the published OpenAPI.
+
+  - name: Error
+    schema: SimpleError
+    fields: [error]
+
+relationships:
+  - {from: Payment, to: Account, type: belongs_to, via: accountFrom, target_field: number}
+  - {from: Payment, to: PaymentPayload, type: has_one, via: payload, note: 'oneOf discriminated by payload.type'}
+  - {from: Payment, to: Payment, type: has_one, via: 'userRequestId (alternate key for documentId)', note: 'Two identifiers address the same document.'}
+  - {from: Conversion, to: Account, type: belongs_to, via: fromAccount, target_field: number}
+  - {from: Conversion, to: Account, type: belongs_to, via: toAccount, target_field: number}
+  - {from: DepositAddress, to: Account, type: belongs_to, via: 'account (path parameter, autoconversion variant only)'}
+  - {from: Order, to: Merchant, type: belongs_to, via: merchantId}
+  - {from: KycCase, to: EndUser, type: belongs_to, via: kycExternalUserId, note: 'EndUser is the integrator''s own subject, not a Capitalist resource.'}
+  - {from: Transaction, to: Account, type: belongs_to, via: 'implied — the list is scoped to the authenticated account', confidence: low}
+  - {from: PaymentCallback, to: Payment, type: belongs_to, via: 'documentId + userRequestId'}
+
+observations:
+  - The spec has no operationIds, so no derived artifact in this repo can bind to
+    one; operations are addressed by method+path throughout.
+  - Account is the only entity with a list operation in the published spec; every
+    other collection (orders, transactions, whitelist) is documentation-only.
+  - There is no Merchant entity operation — merchantId appears on orders but no
+    endpoint resolves it.
+  - Nothing in the model is deletable or updatable. Every write either creates a
+    document or mutates the IP allowlist.
+
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

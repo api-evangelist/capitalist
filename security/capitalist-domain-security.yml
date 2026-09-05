@@ -1,19 +1,24 @@
-generated: '2026-07-11'
+generated: '2026-09-05'
 method: probed
 source: live DNS/TLS/HTTP probes of apis.yml + OpenAPI hosts
 hosts:
 - host: capitalist.net
   https: true
   tls_version: TLSv1.3
-  cert_expires: Sep  5 07:29:09 2026 GMT
+  cert_expires: Nov  3 11:08:49 2026 GMT
   hsts: true
   hsts_max_age: 31536000
 - host: api.capitalist.net
   https: true
   tls_version: TLSv1.3
-  cert_expires: Sep  5 07:29:09 2026 GMT
+  cert_expires: Nov  3 11:08:49 2026 GMT
   hsts: true
   hsts_max_age: 31536000
+- host: api2.capitalist.net
+  https: true
+  tls_version: TLSv1.3
+  cert_expires: Nov  3 11:08:49 2026 GMT
+  hsts: null
 domains:
 - domain: capitalist.net
   dnssec: true

@@ -1,0 +1,106 @@
+generated: '2026-09-05'
+method: probed
+source: >-
+  Direct HTTPS probes of the /.well-known/ discovery surface on every host in
+  apis.yml, every OpenAPI servers[] host, and the documentation host, run
+  2026-09-05 with a browser User-Agent.
+provider: Capitalist
+providerId: capitalist
+description: >-
+  Capitalist serves NO /.well-known/ discovery documents on any host. Every
+  named path returned 404 (or, on the documentation host, a bucket-level 403,
+  and on www a 302 to the apex). robots.txt is the only machine-readable
+  discovery file the provider publishes. No WellKnown or SecurityTxt pointer is
+  emitted in apis.yml, because this file records an absence, not a presence.
+hosts:
+  - host: capitalist.net
+    documents:
+      - {path: /.well-known/security.txt, status: 404}
+      - {path: /.well-known/openid-configuration, status: 404}
+      - {path: /.well-known/oauth-authorization-server, status: 404}
+      - {path: /.well-known/api-catalog, status: 404}
+      - {path: /.well-known/ai-plugin.json, status: 404}
+      - {path: /.well-known/agent-card.json, status: 404}
+      - {path: /.well-known/agent.json, status: 404}
+      - {path: /.well-known/aauth-resource.json, status: 404}
+      - {path: /llms.txt, status: 404}
+      - {path: /robots.txt, status: 200, type: text/plain, file: capitalist-robots.txt}
+    note: >-
+      Next.js app; every 404 returns the site's HTML not-found shell, not an
+      empty body.
+  - host: www.capitalist.net
+    documents:
+      - {path: /.well-known/security.txt, status: 302}
+      - {path: /.well-known/openid-configuration, status: 302}
+      - {path: /.well-known/oauth-authorization-server, status: 302}
+      - {path: /.well-known/api-catalog, status: 302}
+      - {path: /.well-known/ai-plugin.json, status: 302}
+      - {path: /.well-known/agent-card.json, status: 302}
+      - {path: /.well-known/agent.json, status: 302}
+      - {path: /.well-known/aauth-resource.json, status: 302}
+      - {path: /llms.txt, status: 302}
+      - {path: /robots.txt, status: 302}
+    note: www redirects everything to the apex host; no documents of its own.
+  - host: api.capitalist.net
+    documents:
+      - {path: /.well-known/security.txt, status: 404}
+      - {path: /.well-known/openid-configuration, status: 404}
+      - {path: /.well-known/oauth-authorization-server, status: 404}
+      - {path: /.well-known/api-catalog, status: 404}
+      - {path: /.well-known/ai-plugin.json, status: 404}
+      - {path: /.well-known/agent-card.json, status: 404}
+      - {path: /.well-known/agent.json, status: 404}
+      - {path: /.well-known/aauth-resource.json, status: 404}
+      - {path: /llms.txt, status: 404}
+      - {path: /robots.txt, status: 200, type: text/plain, file: capitalist-api-robots.txt}
+    note: >-
+      Deprecated v1 API host. 404s carry the v1 error body 1;"Системная ошибка"
+      rather than an HTML page.
+  - host: api2.capitalist.net
+    documents:
+      - {path: /.well-known/security.txt, status: 404}
+      - {path: /.well-known/openid-configuration, status: 404}
+      - {path: /.well-known/oauth-authorization-server, status: 404}
+      - {path: /.well-known/api-catalog, status: 404}
+      - {path: /.well-known/ai-plugin.json, status: 404}
+      - {path: /.well-known/agent-card.json, status: 404}
+      - {path: /.well-known/agent.json, status: 404}
+      - {path: /.well-known/aauth-resource.json, status: 404}
+      - {path: /llms.txt, status: 404}
+      - {path: /robots.txt, status: 200, type: text/plain, file: capitalist-api2-robots.txt}
+    note: >-
+      Current Integration API host. Its robots.txt is a Cloudflare content-signals
+      preamble that explains the search / ai-input / ai-train vocabulary and
+      reserves rights under EU Directive 2019/790 Article 4, but sets no
+      User-agent rule and no content-signal value — so it neither grants nor
+      restricts any use.
+  - host: docs.capitalist.net
+    documents:
+      - {path: /.well-known/security.txt, status: 403}
+      - {path: /.well-known/openid-configuration, status: 403}
+      - {path: /.well-known/oauth-authorization-server, status: 403}
+      - {path: /.well-known/api-catalog, status: 403}
+      - {path: /.well-known/ai-plugin.json, status: 403}
+      - {path: /.well-known/agent-card.json, status: 403}
+      - {path: /.well-known/agent.json, status: 403}
+      - {path: /.well-known/aauth-resource.json, status: 403}
+      - {path: /llms.txt, status: 403}
+      - {path: /robots.txt, status: 403}
+    note: >-
+      An object-storage bucket serving one published page. Every path that is
+      not an existing object returns an S3-style AccessDenied XML 403, so these
+      are absences, not refusals aimed at our crawler.
+summary:
+  documents_found: 0
+  security_txt: false
+  openid_configuration: false
+  oauth_authorization_server: false
+  api_catalog: false
+  ai_plugin: false
+  agent_card: false
+  aauth_resource: false
+  llms_txt: false
+  robots_txt: true
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

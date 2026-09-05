@@ -1,0 +1,122 @@
+generated: '2026-09-05'
+method: searched
+source: >-
+  https://docs.capitalist.net/api/integration-api.html sections 4.4.1
+  (callbackUrl), 4.8.1-4.8.3 (KYC callbacks) and 5 (Payment Callbacks)
+provider: Capitalist
+providerId: capitalist
+type: Webhooks
+description: >-
+  Capitalist's event surface is a per-request callback, not a subscription. The
+  integrator supplies a callbackUrl on the operation that starts the work
+  (payment creation, KYC initiation) and Capitalist POSTs a signed body to that
+  URL when a final status is reached. There is no event catalog endpoint, no
+  subscription management API, no event type field, no delivery-attempt or
+  retry policy, and no replay endpoint. Capitalist publishes no AsyncAPI
+  document, so this is a webhook catalog rather than an AsyncAPI spec.
+asyncapi_published: false
+asyncapi_probe_note: >-
+  No /asyncapi.yaml, /asyncapi.json or event-catalog surface exists on
+  capitalist.net, api.capitalist.net or api2.capitalist.net, and the GitHub org
+  capitalist-net publishes none (5 public repos, checked 2026-09-05).
+
+transport: HTTPS POST to a caller-supplied URL
+registration:
+  style: per-request
+  mechanism: >-
+    A `callbackUrl` string field on the request body of the initiating
+    operation. There is no endpoint to register, list, update or delete a
+    webhook destination.
+  operations:
+    - POST /v1/payment
+    - POST /v1/kyc/start
+
+security:
+  signed: true
+  headers:
+    - name: X-Request-Timestamp
+      description: Current timestamp in epoch milliseconds.
+    - name: Signature
+      description: sha256_hex(X-Request-Timestamp + raw request body + API secret)
+  verification: >-
+    Recompute sha256_hex(X-Request-Timestamp header + raw body + your API
+    secret) and compare with the Signature header. The construction is identical
+    to the outbound request signature, so the same helper verifies both.
+  docs: https://docs.capitalist.net/api/integration-api.html
+
+events:
+  - name: payment.final-state
+    description: >-
+      Sent when a payment created via POST /v1/payment reaches a final state.
+      The docs describe it as "A POST request will be sent to this URL when a
+      final status is received."
+    trigger: Payment reaches EXECUTED or DECLINED
+    payload_fields:
+      - {name: state, type: string, required: true, description: 'Document final state (EXECUTED, DECLINED)'}
+      - {name: fee, type: number, required: true, description: Transaction fee amount}
+      - {name: documentId, type: integer, required: true, description: Unique identifier of the transaction document}
+      - {name: comment, type: string, required: false, description: Additional information or notes about the transaction}
+      - {name: amount, type: number, required: true, description: Transaction amount}
+      - {name: currency, type: string, required: true, description: 'Transaction currency code (e.g. USD, EUR)'}
+      - {name: type, type: string, required: true, description: 'Payment channel type (e.g. RUCARD, PAYONEER)'}
+      - {name: accountFrom, type: string, required: true, description: Source account identifier}
+      - {name: userRequestId, type: string, required: true, description: The client-supplied unique request identifier}
+      - {name: callbackUrl, type: string, required: true, description: The URL the callback was sent to}
+    example:
+      state: EXECUTED
+      fee: 1.12
+      documentId: 123
+      comment: Own funds
+      amount: 100.00
+      currency: USD
+      type: PAYONEER
+      accountFrom: U0123504
+      userRequestId: '9876543219'
+      callbackUrl: https://some-domain.com/for-callbacks
+    equivalent_poll: GET /v1/payment/{userRequestId}
+    docs: https://docs.capitalist.net/api/integration-api.html
+
+  - name: kyc.status-changed
+    description: >-
+      Sent when the status of a KYC case started via POST /v1/kyc/start changes.
+      The documentation states the callback body is identical to the response of
+      GET /v1/kyc/status/{kycExternalUserId}/{sort}.
+    trigger: KYC status transition
+    payload_fields:
+      - {name: kycExternalUserId, type: string, description: Your unique final user id}
+      - {name: status, type: string, description: 'One of INITIATED, OPENED, COMPLETED, APPROVED, DECLINED, EXPIRED'}
+      - {name: reason, type: string, description: Optional free-text explanation of the status}
+      - {name: uuid, type: string, description: UUID of the KYC case}
+    example:
+      kycExternalUserId: some your user unique id
+      status: FAILED
+      reason: photo is dirty
+      uuid: a-b-c
+    equivalent_poll: GET /v1/kyc/statusByUuid/{uuid}
+    docs: https://docs.capitalist.net/api/integration-api.html
+
+delivery:
+  retries: not documented
+  timeout: >-
+    Not documented. The provider's Best Practices section says only "Ensure your
+    callback URL is always accessible and responds within timeout limits".
+  ordering: not documented
+  deduplication: >-
+    Not documented. The stable correlation keys on the payment callback are
+    documentId and userRequestId; a consumer should treat delivery as
+    at-least-once and dedupe on those.
+  replay_endpoint: null
+  ip_allowlist_for_inbound: not published
+
+gaps:
+  - No AsyncAPI or CloudEvents description of the callback bodies.
+  - No event type/name field in the payload — the consumer infers the event from
+    which URL it registered.
+  - No subscription management, so a callback URL cannot be rotated for
+    in-flight payments.
+  - No retry, timeout or delivery-guarantee statement.
+  - Only final states are delivered; intermediate PENDING transitions are not.
+
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

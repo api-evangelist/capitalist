@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /cards_public_offer_agreement
+Disallow: /cards_public_offer_agreement.html
+Crawl-delay: 5
+

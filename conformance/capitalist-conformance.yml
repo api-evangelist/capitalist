@@ -1,0 +1,210 @@
+generated: '2026-09-05'
+method: searched
+source: >-
+  https://docs.capitalist.net/api/integration-api.html,
+  https://github.com/capitalist-net/API-V2/blob/main/java-client/api-definition/Integration+API.json,
+  https://capitalist.net/fees, https://capitalist.net/useragreement and live
+  probes of the /.well-known/ surface on every Capitalist host (2026-09-05).
+provider: Capitalist
+providerId: capitalist
+description: >-
+  Cross-cutting and domain-standard conformance for the Capitalist Integration
+  API. The contract is a plain JSON-over-HTTPS REST surface described by an
+  OpenAPI 3.0.1 document the provider generates its own Java client from. It
+  adopts none of the cross-cutting web-API standards (no OAuth 2.0, no OIDC, no
+  RFC 9457 problem details, no RFC 8594 deprecation headers, no standard
+  rate-limit headers), and it declares no payments domain standard in the
+  contract: no ISO 20022 message types, no PSD2/Open Banking shape, no FDX
+  resource model. Its money movement is expressed as ~45 proprietary
+  payment-channel payload schemas keyed on a `type` discriminator. Every entry
+  below is recorded with the evidence that decided it; absence of a domain
+  standard is not scored against the provider, only stated.
+
+conformance:
+  - id: openapi
+    name: OpenAPI Specification
+    conforms: true
+    version: 3.0.1
+    evidence: >-
+      https://github.com/capitalist-net/API-V2/blob/main/java-client/api-definition/Integration+API.json
+      — openapi: "3.0.1", servers[0].url https://api2.capitalist.net, 6 paths.
+      Consumed by openapi-generator-maven-plugin 7.14.0 in
+      java-client/client/java/pom.xml to build the provider's own Java client.
+    note: >-
+      Partial coverage: the document describes 6 of the ~20 endpoints in the
+      prose documentation. Whitelist, orders, transactions, deposit-address and
+      the six KYC operations are documented but absent from the spec. It also
+      declares no operationIds, no summaries, no securitySchemes and no
+      examples — see overlays/capitalist-integration-api-overlay.yaml.
+
+  - id: rest
+    name: REST over HTTPS with JSON
+    conforms: true
+    evidence: >-
+      Resource paths under /v1/, GET for reads and POST for writes,
+      application/json request and response bodies throughout the published
+      OpenAPI.
+
+  - id: tls
+    name: HTTPS-only transport
+    conforms: true
+    evidence: >-
+      "Use HTTPS - All API calls must use HTTPS protocol"
+      (https://docs.capitalist.net/api/integration-api.html section 9.1).
+      HSTS observed on api.capitalist.net:
+      strict-transport-security: max-age=31536000; includeSubDomains
+      (checked 2026-09-05).
+
+  - id: oauth2
+    name: OAuth 2.0
+    conforms: false
+    evidence: >-
+      No oauth2 securityScheme in the published OpenAPI and no
+      /.well-known/oauth-authorization-server on capitalist.net,
+      api.capitalist.net or api2.capitalist.net (all 404, 2026-09-05).
+      Authentication is a signed API key: API-Key + X-Request-Timestamp +
+      Signature headers.
+
+  - id: oidc
+    name: OpenID Connect
+    conforms: false
+    evidence: >-
+      /.well-known/openid-configuration returns 404 on every Capitalist host
+      (2026-09-05).
+
+  - id: rfc9457
+    name: 'RFC 9457: Problem Details for HTTP APIs'
+    conforms: false
+    evidence: >-
+      The error media type is application/json with the SimpleError schema
+      { "error": string } — no type/title/status/detail/instance members and no
+      application/problem+json. Documented at
+      https://docs.capitalist.net/api/integration-api.html section 7.
+
+  - id: rfc8594
+    name: 'RFC 8594: The Sunset HTTP Header Field'
+    conforms: false
+    evidence: >-
+      No Sunset or Deprecation headers on either API host, despite the v1 API
+      being publicly deprecated (its documentation now lives at
+      https://capitalist.net/developers/deprecated/v1/api). Checked 2026-09-05.
+
+  - id: rfc9116
+    name: 'RFC 9116: security.txt'
+    conforms: false
+    evidence: >-
+      /.well-known/security.txt returns 404 on capitalist.net,
+      api.capitalist.net and api2.capitalist.net (2026-09-05).
+
+  - id: ratelimit-headers
+    name: IETF RateLimit header fields
+    conforms: false
+    evidence: >-
+      No RateLimit-* or X-RateLimit-* headers documented or observed on live
+      responses from either host (2026-09-05). The one published limit — 20
+      status polls per minute — is prose only.
+
+  - id: idempotency
+    name: Idempotent write semantics
+    conforms: partial
+    evidence: >-
+      A client-supplied userRequestId on POST /v1/payment is the documented
+      duplicate-prevention mechanism (section 9.1). It covers 1 of the 8
+      documented mutating operations; POST /v1/exchange has none. See
+      conventions/capitalist-conventions.yml (idempotency.coverage: partial).
+
+  - id: pagination
+    name: Offset/limit pagination
+    conforms: true
+    evidence: >-
+      GET /v1/orders and GET /v1/transactions both accept limit (default 100)
+      and offset (default 0) and return a count alongside the page.
+      https://docs.capitalist.net/api/integration-api.html sections 4.5-4.6.
+
+  - id: iso8601
+    name: 'ISO 8601 date/time representation'
+    conforms: true
+    evidence: >-
+      periodStart/periodEnd request parameters and creationDate, createDate,
+      executeDate and planDate response fields are all specified as ISO 8601.
+
+  - id: iso4217
+    name: 'ISO 4217 currency codes'
+    conforms: partial
+    evidence: >-
+      USD, EUR, BTC and ETH follow the common codes, but the reference table
+      (section 8.1) uses RUR for the Russian rouble where ISO 4217 assigns RUB,
+      and extends the space with non-ISO network qualifiers USDTt, USDTb, USDCb.
+      A client cannot use an off-the-shelf ISO 4217 validator against this API.
+
+domain_standards:
+  sector: payments / mass payouts / cross-border remittance
+  declared_in_contract: false
+  detail: >-
+    The contract declares no payments domain standard. Checked against the
+    standards a payments provider could plausibly implement, using the contract
+    itself as evidence rather than any marketing claim.
+  checks:
+    - id: iso20022
+      name: ISO 20022 financial messaging
+      conforms: false
+      evidence: >-
+        No pain.001/pacs message types, no ISO 20022 element names and no
+        camt-shaped statement resource anywhere in the OpenAPI or the prose
+        documentation. Wire transfers appear only as fee-table line items
+        ("Wire USD", "Wire EUR", "SWIFT inquiry (Wire)") and as manually priced
+        support services, not as API operations.
+    - id: psd2
+      name: PSD2 / Berlin Group / UK Open Banking
+      conforms: false
+      evidence: >-
+        No AISP/PISP resource model, no consent resource, no SCA flow, no
+        eIDAS certificate handling. Capitalist is a payment platform serving the
+        CIS region and global payouts, not a European account-servicing
+        institution exposing a regulated third-party access interface.
+    - id: fdx
+      name: Financial Data Exchange (FDX) API
+      conforms: false
+      evidence: >-
+        No FDX resources (accounts, transactions, entities) in FDX shape and no
+        FDX-style OAuth consent surface. GET /v1/transactions is a proprietary
+        list.
+    - id: pci-dss
+      name: PCI DSS
+      conforms: unknown
+      evidence: >-
+        No PCI DSS attestation, compliance page or trust centre is published on
+        capitalist.net (no /security-* or /trust page found; /.well-known probes
+        all 404, 2026-09-05). Raw PAN is accepted in the API payload for the
+        card channels (RUCARD, TRCARD, KZCARD, UZCARD, AZCARD, GECARD,
+        WORLDCARDEUR/USD all take a `account` field documented as a 16-19 digit
+        card number), which places an integrator in PCI scope, and the provider
+        publishes nothing about its own certification. Recorded as unknown, not
+        as a failure: absence of a published attestation is not evidence of
+        absence of certification.
+    - id: openrtb
+      name: OpenRTB
+      conforms: false
+      evidence: Not applicable — not an advertising surface.
+  note: >-
+    REWARD-ONLY dimension. Capitalist's market has candidate standards
+    (ISO 20022 for the wire leg, PCI DSS for the card leg) and the contract
+    declares neither, so no domain-standard credit is claimed here. Nothing is
+    invented to fill the slot.
+
+compliance:
+  certifications_published: []
+  trust_center: null
+  note: >-
+    No certification list, audit report, SOC 2 / ISO 27001 claim, or trust
+    centre was found on the provider's public surface. KYC is offered as a
+    product capability (POST /v1/kyc/*), which implies an AML/KYC programme, but
+    the programme itself is not documented publicly.
+  evidence:
+    - {url: 'https://capitalist.net/', status: 200, note: No compliance or certification statements in the page copy.}
+    - {url: 'https://capitalist.net/useragreement', status: 200}
+    - {url: 'https://capitalist.net/.well-known/security.txt', status: 404}
+
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

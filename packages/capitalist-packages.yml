@@ -1,0 +1,181 @@
+generated: '2026-09-05'
+method: searched
+source: >-
+  https://github.com/capitalist-net (5 public repos, enumerated 2026-09-05),
+  https://docs.capitalist.net/api/integration-api.html section 10 (Coding
+  Examples), and registry lookups against repo.packagist.org, registry.npmjs.org
+  and search.maven.org.
+provider: Capitalist
+providerId: capitalist
+description: >-
+  Capitalist ships first-party client code, but does not PUBLISH it to any
+  package registry. Every official library below is consumed by cloning or
+  vendoring a GitHub repository — none resolves from npm, Packagist, Maven
+  Central, PyPI, NuGet, RubyGems, crates.io or pkg.go.dev. The php-api-samples
+  repo carries a composer.json declaring version 2.8.0 and the name
+  capitalist-net/php-api-samples, but that package name returns 404 from
+  repo.packagist.org, so `composer require` cannot install it without a VCS
+  repository entry. The Java client is not a hand-written SDK at all: it is
+  generated at build time by openapi-generator-maven-plugin 7.14.0 from the
+  provider's own Integration+API.json, which is what makes that file the
+  canonical first-party contract.
+registry_coverage:
+  npm: absent
+  packagist: absent
+  maven_central: absent
+  pypi: absent
+  nuget: absent
+  rubygems: absent
+  crates: absent
+  go: absent
+
+packages:
+  - language: java
+    name: ru.capitalist:capitalist-client
+    official: true
+    registry: github
+    url: https://github.com/capitalist-net/API-V2
+    source: https://github.com/capitalist-net/API-V2
+    api: Capitalist Integration API (v2)
+    install: git clone https://github.com/capitalist-net/API-V2 && mvn -f java-client/pom.xml install
+    version: '1.0'
+    published: '2025-12-02'
+    published_source: >-
+      Repo pushed_at from the GitHub API (2025-12-02T16:06:56Z); version read
+      from java-client/pom.xml <version>1.0</version>. Not on Maven Central —
+      a search.maven.org query for g:ru.capitalist returned no artifacts on
+      2026-09-05, so `version: '1.0'` is the declared POM version, not a
+      published release.
+    note: >-
+      Multi-module Maven project. The client module is GENERATED from
+      java-client/api-definition/Integration+API.json by
+      openapi-generator-maven-plugin 7.14.0; the hand-written parts are
+      CapitalistApi.java, CapitalistApiClient.java and SignatureInterceptor.java
+      (the API-Key/X-Request-Timestamp/Signature request signer). Ships three
+      runnable examples: CreatePaymentExample, GetAccountListExample,
+      GetRateExample.
+
+  - language: php
+    name: capitalist-net/php-api-samples
+    official: true
+    registry: github
+    url: https://github.com/capitalist-net/php-api-samples
+    source: https://github.com/capitalist-net/php-api-samples
+    api: Capitalist Payments API (v1, deprecated)
+    install: git clone https://github.com/capitalist-net/php-api-samples
+    version: 2.8.0
+    published: '2025-12-02'
+    published_source: >-
+      Version read from composer.json ("version": "2.8.0"); date is the repo
+      pushed_at from the GitHub API (2025-12-02T13:00:07Z). The package name
+      capitalist-net/php-api-samples returns HTTP 404 from
+      https://repo.packagist.org/p2/capitalist-net/php-api-samples.json
+      (checked 2026-09-05), so it is not installable from Packagist.
+    license: MIT
+    requires: 'php >=8.3, phpseclib/phpseclib 3.0.36.0, ext-curl'
+    note: >-
+      A real client (capitalist/api/Client.php, Signer.php,
+      OperationsInterface.php, VerificationTypesInterface.php) plus samples for
+      accounts, payments and currency rates, with a Docker php-cli harness. It
+      targets the DEPRECATED v1 form-field API, not the v2 Integration API.
+
+  - language: csharp
+    name: capitalist-net/api-examples
+    official: true
+    registry: github
+    url: https://github.com/capitalist-net/api-examples
+    source: https://github.com/capitalist-net/api-examples
+    api: Capitalist Payments API (v1, deprecated)
+    install: git clone https://github.com/capitalist-net/api-examples
+    version: null
+    published: '2025-09-20'
+    published_source: >-
+      No package manifest and no tags; there is nothing to version. Date is the
+      repo pushed_at from the GitHub API (2025-09-20T04:55:02Z).
+    note: >-
+      Two C# snippets only (batch_sign.cs, import_batch_with_pass_encryption.cs).
+      Sample code, not a library.
+
+  - language: csharp
+    name: capitalist-net/docs
+    official: true
+    registry: github
+    url: https://github.com/capitalist-net/docs
+    source: https://github.com/capitalist-net/docs
+    api: Capitalist Payments API (v1, deprecated)
+    install: git clone https://github.com/capitalist-net/docs
+    version: null
+    published: '2025-10-01'
+    published_source: >-
+      No manifest, no tags. Date is repo pushed_at (2025-10-01T15:49:17Z).
+    note: >-
+      Despite the name, this repo holds two .NET Core snippets
+      (import_batch_with_pass_encryption.cs, password_encryption.cs), not
+      documentation.
+
+  - language: java
+    name: capitalist-net/Capitalist-API-Java-crypto
+    official: true
+    registry: github
+    url: https://github.com/capitalist-net/Capitalist-API-Java-crypto
+    source: https://github.com/capitalist-net/Capitalist-API-Java-crypto
+    api: Capitalist Payments API (v1, deprecated)
+    install: git clone https://github.com/capitalist-net/Capitalist-API-Java-crypto
+    version: null
+    published: '2016-11-03'
+    published_source: >-
+      No release tags and no registry entry; date is repo pushed_at
+      (2016-11-03T09:57:56Z).
+    note: >-
+      PasswordEncoder.java and SignatureCreator.java for the v1 password
+      encryption and certificate signing. Last pushed in 2016 — nearly a decade
+      stale, and it wraps the generation the provider now files under
+      /developers/deprecated/.
+
+third_party:
+  - language: php
+    name: tigokr/php-capitalist-client
+    official: false
+    registry: packagist
+    url: https://packagist.org/packages/tigokr/php-capitalist-client
+    description: Capitalist.net PHP API client
+    downloads: 4516
+    version: null
+    published: null
+    published_source: >-
+      Discovered via https://packagist.org/search.json?q=capitalist on
+      2026-09-05; download count from that search index. Version metadata not
+      retrieved — recorded null rather than guessed.
+    note: Community package. Not endorsed or referenced by Capitalist.
+  - language: php
+    name: alkricha/capitalist
+    official: false
+    registry: packagist
+    url: https://packagist.org/packages/alkricha/capitalist
+    description: >-
+      "The API allows developers to integrate their applications into the
+      Capitalist system for automated downloading payments into the system."
+    downloads: 15317
+    version: null
+    published: null
+    published_source: >-
+      Discovered via https://packagist.org/search.json?q=capitalist on
+      2026-09-05. Version metadata not retrieved — recorded null rather than
+      guessed.
+    note: >-
+      The most-installed Capitalist package on Packagist is a community one, not
+      the provider's. Mirrored at https://github.com/kricha/capitalist.
+
+gaps:
+  - No first-party package on any language registry, so no dependency-manager
+    install path exists for any language.
+  - No JavaScript/TypeScript, Python, Go, Ruby or .NET library at all — the two
+    C# repos are snippets.
+  - Only the Java client targets the current v2 Integration API. Every other
+    first-party repo wraps the deprecated v1 surface.
+  - The most-used community PHP package (15k installs) fills a gap the provider
+    left open, with no provider oversight.
+
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

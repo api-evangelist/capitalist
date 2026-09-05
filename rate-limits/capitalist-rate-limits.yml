@@ -4,92 +4,86 @@ schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main
 provider: Capitalist
 providerId: capitalist
 created: '2026-05-04'
-# Provenance stamped 2026-08-11: this artifact was written by the API Evangelist
-# bulk sweep dated 2026-05-04, not harvested from the provider. See roadmap#35.
-method: generated
-modified: '2026-05-04'
+modified: '2026-09-05'
+generated: '2026-09-05'
+method: searched
+source: >-
+  https://docs.capitalist.net/api/integration-api.html section 9.3 (Rate
+  Limiting), plus live header inspection of https://api2.capitalist.net and
+  https://api.capitalist.net on 2026-09-05.
+description: >-
+  Published rate-limit posture for the Capitalist Integration API. Capitalist
+  documents exactly one number — a 20-per-minute guidance ceiling on
+  transaction-status polling — states that transaction creation is unrestricted,
+  and describes throttling as automatic and unspecified. No rate-limit response
+  headers are published or observed, and no 429 status is documented, so a
+  client has no runtime signal to back off against. This file replaces a
+  2026-05-04 scaffold that asserted invented free/professional/enterprise tiers.
 tags:
   - Bulk Payouts
   - Cryptocurrency
   - Finance
   - Mass Payments
-  - Payment Platform
   - Payments
   - Payouts
-  - Remittance
   - Rate Limiting
-  - Quotas
   - Throttling
-description: Machine-readable rate limit definitions for the Capitalist API surface. Captures per-tier
-  quotas, burst behavior, response signaling, and recovery semantics. Defaults are scaffold values to
-  be replaced with published provider limits.
 headers:
-  limit: X-RateLimit-Limit
-  remaining: X-RateLimit-Remaining
-  reset: X-RateLimit-Reset
-  retryAfter: Retry-After
-  policy: RateLimit-Policy
+  limit: null
+  remaining: null
+  reset: null
+  retryAfter: null
+  policy: null
+headers_note: >-
+  No X-RateLimit-*, RateLimit-* or Retry-After headers are documented, and none
+  were present on live responses from either host (401 from
+  GET https://api2.capitalist.net/v1/rate and 200 from
+  POST https://api.capitalist.net/, both checked 2026-09-05).
 responseCodes:
-  throttled: 429
-  quotaExceeded: 429
-  serviceUnavailable: 503
+  throttled: null
+  quotaExceeded: null
+  serviceUnavailable: null
+responseCodes_note: >-
+  The provider's documented status table (section 7.2) lists only 200 and 400.
+  No status code is published for throttling.
+limit_count: 1
 limits:
-  - tier: free
-    name: Free Tier Default
+  - name: Transaction status polling
     scope: api-key
     metric: requests_per_minute
-    limit: 10
-    burst: 20
+    limit: 20
+    burst: null
     timeFrame: minute
+    enforcement: advisory
     applies:
-      - Capitalist API
-  - tier: free
-    name: Free Tier Monthly Quota
-    scope: api-key
-    metric: requests_per_month
-    limit: 1000
-    timeFrame: month
-    applies:
-      - Capitalist API
-  - tier: professional
-    name: Professional Tier Default
-    scope: api-key
-    metric: requests_per_minute
-    limit: 100
-    burst: 200
-    timeFrame: minute
-    applies:
-      - Capitalist API
-  - tier: professional
-    name: Professional Tier Monthly Quota
-    scope: api-key
-    metric: requests_per_month
-    limit: 100000
-    timeFrame: month
-    applies:
-      - Capitalist API
-  - tier: enterprise
-    name: Enterprise Negotiated Limit
-    scope: contract
-    metric: requests_per_minute
-    limit: 1000
-    burst: 5000
-    timeFrame: minute
-    applies:
-      - Capitalist API
+      - GET /v1/payment/document/{documentId}
+      - GET /v1/payment/{userRequestId}
+    statement: >-
+      "If you want to poll transaction statuses more than 20 times per minute,
+      consider integrating callbacks instead."
+    source: https://docs.capitalist.net/api/integration-api.html
 policies:
-  - name: Backoff Strategy
-    description: Clients should implement exponential backoff with jitter, honoring the Retry-After header
-      when present.
-  - name: Burst Handling
-    description: Short bursts above the steady-state limit are tolerated up to the documented burst ceiling
-      before throttling engages.
-  - name: Quota Reset
-    description: Monthly quotas reset at the start of each calendar month in UTC. Per-minute and per-second
-      windows reset on a sliding-window basis.
-  - name: Fair Use
-    description: Even on uncapped enterprise tiers, sustained usage that materially impacts shared infrastructure
-      may be subject to fair-use throttling.
+  - name: Unrestricted transaction creation
+    description: >-
+      "You can create new transactions without any restrictions." No documented
+      ceiling on POST /v1/payment.
+    source: https://docs.capitalist.net/api/integration-api.html
+  - name: Automatic throttling
+    description: >-
+      "With excessively frequent API calls, the system will automatically
+      throttle your requests." The threshold, the mechanism and the response
+      shape are all undocumented.
+    source: https://docs.capitalist.net/api/integration-api.html
+  - name: Prefer callbacks over polling
+    description: >-
+      The provider's stated remedy for the polling ceiling is to register a
+      callbackUrl on payment creation and consume the signed status callback.
+    detail: asyncapi/capitalist-webhooks.yml
+gaps:
+  - No 429 (or any) throttling status code documented.
+  - No rate-limit response headers, so an agent cannot detect how close it is to
+    a limit or how long to wait.
+  - The one published number is guidance ("consider"), not a contractual limit.
 maintainers:
   - FN: Kin Lane
     email: kin@apievangelist.com

@@ -1,0 +1,155 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for the Capitalist Integration API
+  version: 1.0.0
+extends: openapi/capitalist-integration-api-openapi.json
+x-generated: '2026-09-05'
+x-method: generated
+x-source: >-
+  Authored by API Evangelist from https://docs.capitalist.net/api/integration-api.html.
+  Every value below is stated by Capitalist in its own documentation or observed
+  on a live probe; the overlay adds nothing the provider does not publish. It is
+  applied ON TOP of the harvested spec and never mutates it.
+x-rationale: >-
+  The provider's Integration+API.json is real and first-party, but it is
+  generator input rather than a published developer contract: it has no
+  operationIds, no summaries, no securitySchemes, no server description and no
+  examples. This overlay supplies exactly those, so derived artifacts and agent
+  tooling in this repository have stable handles to bind to.
+actions:
+  - target: $.info
+    description: Add contact, licence-free terms link and a description naming the auth headers.
+    update:
+      description: >-
+        The Capitalist Integration API (v2) creates and tracks outbound payouts
+        across card, bank, mobile, fast-payment-system, e-wallet and
+        cryptocurrency channels, converts between the account's own currency
+        balances, and reads exchange rates. Every request carries three
+        authentication headers: API-Key, X-Request-Timestamp (epoch
+        milliseconds) and Signature (sha256_hex of timestamp + raw body + API
+        secret). Payment outcomes are delivered to a per-request callbackUrl,
+        signed with the same construction.
+      contact:
+        name: Capitalist API support
+        url: https://capitalist.net/support
+      termsOfService: https://capitalist.net/useragreement
+  - target: $.servers[0]
+    description: Describe the server so the host's role is legible.
+    update:
+      description: Production Integration API (v2). There is no sandbox or test host.
+  - target: $.components.securitySchemes
+    description: >-
+      Declare the signed-API-key scheme the API actually enforces. The harvested
+      spec ships an empty securitySchemes object, so a generated client is
+      unauthenticated by default.
+    update:
+      apiKeyHeader:
+        type: apiKey
+        in: header
+        name: API-Key
+        description: >-
+          API key created at https://capitalist.net/security. Requires API
+          access enabled and Google 2FA active on the account.
+      requestTimestamp:
+        type: apiKey
+        in: header
+        name: X-Request-Timestamp
+        description: Current timestamp in epoch milliseconds.
+      requestSignature:
+        type: apiKey
+        in: header
+        name: Signature
+        description: 'sha256_hex(X-Request-Timestamp + raw request body + API secret), lowercase hex.'
+  - target: $
+    description: Apply all three authentication headers globally.
+    update:
+      security:
+        - apiKeyHeader: []
+          requestTimestamp: []
+          requestSignature: []
+  - target: $.paths['/v1/account/list'].get
+    description: Add an operationId and a summary.
+    update:
+      operationId: listAccounts
+      summary: List accounts
+      description: Retrieves a list of accounts filtered by currency.
+  - target: $.paths['/v1/rate'].get
+    description: Add an operationId and a summary.
+    update:
+      operationId: getExchangeRate
+      summary: Get exchange rate
+      description: Retrieves the current exchange rate between two currencies.
+  - target: $.paths['/v1/exchange'].post
+    description: Add an operationId, summary and an explicit irreversibility warning.
+    update:
+      operationId: createExchange
+      summary: Create currency exchange
+      description: >-
+        Creates a currency conversion between two of the account holder's own
+        accounts and returns null on success. IRREVERSIBLE — there is no
+        published reverse, cancel or undo operation, and no idempotency key is
+        accepted, so a retried call converts twice.
+  - target: $.paths['/v1/payment'].post
+    description: Add an operationId, summary and the idempotency + irreversibility semantics.
+    update:
+      operationId: createPayment
+      summary: Create payment
+      description: >-
+        Creates an outbound payout. The payload object's `type` selects the
+        payment channel and determines which recipient fields are required.
+        IRREVERSIBLE — no cancel, void or refund operation exists; a payment
+        proceeds to EXECUTED or DECLINED. The only duplicate guard is the
+        client-supplied userRequestId, which the provider documents as the
+        idempotency mechanism. Supply callbackUrl to receive the signed final
+        status instead of polling.
+  - target: $.paths['/v1/payment/document/{documentId}'].get
+    description: Add an operationId and a summary.
+    update:
+      operationId: getPaymentByDocumentId
+      summary: Get payment status by document id
+      description: >-
+        Retrieves the current state, calculated fee and originally submitted
+        fields of a payment by its server-assigned documentId.
+  - target: $.paths['/v1/payment/{userRequestId}'].get
+    description: Add an operationId, a summary and the polling guidance.
+    update:
+      operationId: getPaymentByUserRequestId
+      summary: Get payment status by user request id
+      description: >-
+        Retrieves the current state, calculated fee and originally submitted
+        fields of a payment by the client's own userRequestId. Capitalist asks
+        that status polling stay under 20 requests per minute and that
+        callbacks be used instead.
+  - target: $.components.schemas.SimpleError
+    description: Document the error envelope.
+    update:
+      description: >-
+        The API's only error shape. Not RFC 9457 problem+json — a single
+        free-text `error` member with no stable machine code, returned with
+        HTTP 400.
+  - target: $.components.schemas.CreatePaymentIntegrationRequest.properties.userRequestId
+    description: Name userRequestId as the idempotency key.
+    update:
+      description: >-
+        Your unique transaction identifier. Documented by the provider as the
+        duplicate-prevention (idempotency) mechanism for payment creation, and
+        usable afterwards as an alternate lookup key on
+        GET /v1/payment/{userRequestId}.
+  - target: $.components.schemas.CreatePaymentIntegrationRequest.properties.callbackUrl
+    description: Explain the callback contract.
+    update:
+      description: >-
+        URL that receives a POST with the final payment status. The callback
+        carries X-Request-Timestamp and Signature headers computed the same way
+        as request signatures, so it can be verified with the same helper.
+x-not-added:
+  - >-
+    No operations were added. The documentation describes ~20 endpoints
+    (whitelist, orders, transactions, deposit addresses, six KYC operations)
+    that the harvested spec omits; adding them here would be authoring a
+    contract on the provider's behalf. They are recorded as documentation-only
+    in data-model/capitalist-data-model.yml and mcp/capitalist-mcp.yml instead.
+  - >-
+    No response examples were injected into the spec. Verbatim documented
+    examples live in examples/capitalist-integration-api-examples.yml with their
+    source, rather than being presented as part of the provider's contract.

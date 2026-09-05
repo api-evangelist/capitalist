@@ -5,11 +5,13 @@ name: Capitalist
 description: >-
   Capitalist is a payment platform that lets businesses make mass payouts
   and receive money across multiple payment systems and cryptocurrencies
-  without having to open separate accounts with each. The Capitalist API
-  automates bulk payouts, exchange between currencies and digital assets,
-  account balance queries, and transaction history retrieval for fintech,
-  affiliate-network, and marketplace use cases operating across the CIS
-  region and globally.
+  without having to open separate accounts with each. The Capitalist
+  Integration API automates bulk payouts to cards, bank transfers, mobile
+  operators, fast payment systems, e-wallets and cryptocurrencies, converts
+  between fiat and digital-asset balances, reads exchange rates and account
+  balances, retrieves transaction and merchant-order history, and runs
+  end-user KYC — for fintech, affiliate-network, and marketplace use cases
+  operating across the CIS region and globally.
 type: Index
 kind: company
 deliveryModel:
@@ -51,34 +53,66 @@ tags:
   - Payouts
   - Remittance
 created: '2024-11-05'
-modified: '2026-04-23'
+modified: '2026-09-05'
 specificationVersion: '0.23'
 apis:
 - aid: capitalist:capitalist-api
   name: Capitalist API
   description: >-
-    The Capitalist API enables programmatic mass payouts, transfers, currency conversion, and balance
-    and transaction management across Capitalist's supported payment systems and cryptocurrencies. It
-    is designed for businesses that need to pay large numbers of recipients (affiliates, freelancers,
-    publishers) without maintaining separate accounts in each underlying payment system.
+    The current Capitalist API — published as the "Integration API" — enables programmatic
+    mass payouts, currency and digital-asset conversion, and balance, transaction and
+    merchant-order reporting across Capitalist's supported payment systems. It is a
+    JSON-over-HTTPS REST surface at https://api2.capitalist.net that creates and tracks
+    outbound payouts across roughly 45 payment channels (cards, bank transfers, mobile
+    operators, fast payment systems, e-wallets and cryptocurrencies), issues ephemeral
+    cryptocurrency deposit addresses, and runs end-user KYC. Every request carries three
+    headers — API-Key, X-Request-Timestamp and a SHA-256 signature over the timestamp,
+    the raw body and the API secret — and payment outcomes are delivered to a per-request
+    callbackUrl signed the same way. It is designed for businesses that need to pay large
+    numbers of recipients (affiliates, freelancers, publishers) without maintaining
+    separate accounts in each underlying payment system.
   humanURL: https://capitalist.net/developers/api
+  baseURL: https://api2.capitalist.net
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/capitalist.png
   tags:
   - Bulk Payouts
+  - Cryptocurrency
+  - KYC
   - Mass Payments
   - Payments
   - Payouts
   properties:
+  - type: OpenAPI
+    url: openapi/capitalist-integration-api-openapi.json
+    name: Capitalist Integration API OpenAPI 3.0.1
+    description: >-
+      First-party OpenAPI published by Capitalist at
+      https://github.com/capitalist-net/API-V2/blob/main/java-client/api-definition/Integration+API.json
+      and consumed by the provider's own openapi-generator build to produce its Java client.
+      Saved verbatim. servers[0] is https://api2.capitalist.net, the base URL the provider's
+      own documentation states.
+  - type: Overlay
+    url: overlays/capitalist-integration-api-overlay.yaml
+    name: API Evangelist enhancements overlay
+  - type: Examples
+    url: examples/capitalist-integration-api-examples.yml
   - type: Documentation
     url: https://capitalist.net/developers/api
+  - type: APIReference
+    url: https://docs.capitalist.net/api/integration-api.html
+  - type: SourceCode
+    url: https://github.com/capitalist-net/API-V2
   - type: Website
     url: https://capitalist.net/developers/api
   x-features:
-  - Mass payout submission for large batches of recipients
-  - Receiving money across multiple payment systems in one account
+  - Mass payout submission for large batches of recipients across ~45 payment channels
+  - Signed-request authentication with per-account IP allowlisting
+  - Signed callbacks carrying the final payment state and the fee charged
   - Exchange/conversion between supported currencies and crypto
+  - Ephemeral cryptocurrency deposit addresses, including USDT TRC-20 autoconversion
   - Account balance queries across currencies
-  - Transaction history retrieval and reconciliation
-  - Single integration across fiat and cryptocurrency channels
+  - Transaction and merchant-order history retrieval with date-window paging
+  - End-user KYC initiation, data and document capture, and status callbacks
   x-use-cases:
   - Affiliate and publisher payouts at scale
   - Freelancer and contractor payments in multiple currencies
@@ -87,15 +121,27 @@ apis:
   - Cross-border remittance automation
   - Consolidated reconciliation across multiple payment rails
 - aid: capitalist:capitalist-capitalist-payments-api-api
-  name: Capitalist Capitalist Payments API API
+  name: Capitalist Payments API (v1, deprecated)
   description: >-
-    The Capitalist Payments API API from Capitalist — 1 operation(s) for capitalist payments api.
-  humanURL: https://capitalist.net/developers/api
+    The first generation of the Capitalist API: a single HTTP POST endpoint at
+    https://api.capitalist.net where an `operation` form field selects the call
+    (get_accounts, import_batch_advanced, process_batch, currency_rates,
+    documents_search, get_batch_info, get_document_fee, get_documents_history_ext,
+    get_token, is_verified_account). Credentials travel as form fields — account
+    login plus a plain, encrypted or certificate-signed password. Capitalist has
+    moved its documentation to https://capitalist.net/developers/deprecated/v1/api;
+    the host still answers and self-reports API version 1.9.8, but no sunset date
+    is published.
+  humanURL: https://capitalist.net/developers/deprecated/v1/api
+  baseURL: https://api.capitalist.net
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/capitalist.png
   tags:
   - Capitalist Payments API
   properties:
   - type: OpenAPI
     url: openapi/capitalist-capitalist-payments-api-api-openapi.yml
+  - type: Documentation
+    url: https://capitalist.net/developers/deprecated/v1/api
 common:
   - type: AgenticAccess
     url: agentic-access/capitalist-agentic-access.yml
@@ -103,18 +149,95 @@ common:
     url: security/capitalist-domain-security.yml
   - type: Authentication
     url: authentication/capitalist-authentication.yml
+  - type: Conventions
+    url: conventions/capitalist-conventions.yml
+  - type: Idempotency
+    url: conventions/capitalist-conventions.yml
+    name: Idempotency and reversibility semantics
+    description: >-
+      Capitalist documents a client-supplied userRequestId on POST /v1/payment as its
+      duplicate-prevention mechanism. Coverage is partial — it is a body field on one
+      mutating operation, not a header across the mutating surface — and there is no
+      reversal operation anywhere in the API.
+  - type: DataModel
+    url: data-model/capitalist-data-model.yml
+  - type: ErrorCatalog
+    url: errors/capitalist-problem-types.yml
+  - type: Conformance
+    url: conformance/capitalist-conformance.yml
+  - type: Lifecycle
+    url: lifecycle/capitalist-lifecycle.yml
+  - type: RateLimits
+    url: rate-limits/capitalist-rate-limits.yml
+  - type: Plans
+    url: plans/capitalist-plans-pricing.yml
+  - type: FinOps
+    url: finops/capitalist-finops.yml
+  - type: Webhooks
+    url: asyncapi/capitalist-webhooks.yml
+    name: Capitalist payment and KYC callbacks
+    description: >-
+      Per-request signed callbacks fired on the final payment state and on KYC status
+      changes. Capitalist publishes no AsyncAPI document, so this is a webhook catalog.
+  - type: Packages
+    url: packages/capitalist-packages.yml
+  - type: SDKs
+    url: packages/capitalist-packages.yml
+    name: Capitalist first-party client libraries
+    description: >-
+      First-party Java client for the v2 Integration API and PHP client for the
+      deprecated v1 API, plus C# samples. All are clone-only from
+      https://github.com/capitalist-net — Capitalist publishes to no package registry.
+  - type: AgentSkill
+    url: skills/_index.yml
+    name: Capitalist Agent Skills
+  - type: LLMsTxt
+    url: llms/capitalist-llms.txt
+  - type: X-MCPServerCandidate
+    url: mcp/capitalist-mcp.yml
+    name: Derived MCP tool candidate
+    description: >-
+      Capitalist publishes no MCP server, hosted or stdio. This is a candidate tool
+      surface derived from the provider's own contract, recorded so the gap is legible.
+      It is not a callable agent surface.
   - type: GitHubOrganization
     url: https://github.com/capitalist-net
   - type: LinkedIn
     url: https://www.linkedin.com/company/capitalist-inc
   - type: Website
     url: https://capitalist.net/
+  - type: DeveloperPortal
+    url: https://capitalist.net/developers/api
   - type: Documentation
     url: https://capitalist.net/developers/api
+  - type: APIReference
+    url: https://docs.capitalist.net/api/integration-api.html
+  - type: Support
+    url: https://capitalist.net/support
+  - type: Blog
+    url: https://capitalist.net/news
   - type: Signup
     url: https://capitalist.net/reg
+    x-liveness:
+      status: 403
+      checked: '2026-09-05'
+      verdict: live-but-crawler-blocked
+      note: >-
+        /reg is Disallow-ed in https://capitalist.net/robots.txt and Cloudflare
+        answers automated clients with 403 even with a browser User-Agent and
+        Referer. The page demonstrably exists — it is linked as href="/reg" from
+        the provider's own homepage. Recorded as an edge policy, not a dead link.
   - type: Login
     url: https://capitalist.net/login
+    x-liveness:
+      status: 403
+      checked: '2026-09-05'
+      verdict: live-but-crawler-blocked
+      note: >-
+        /login is Disallow-ed in https://capitalist.net/robots.txt and returns 403
+        to automated clients. The route exists — the site ships localized login
+        bundles (en/es/fr/it/pt login.json) in its own Next.js build. Recorded as
+        an edge policy, not a dead link.
   - type: Pricing
     url: https://capitalist.net/fees
   - type: PrivacyPolicy
@@ -124,3 +247,8 @@ common:
 maintainers:
   - FN: Kin Lane
     email: kin@apievangelist.com
+x-enrichment:
+  date: '2026-09-05'
+  status: enriched
+  artifacts_added: 21
+  pass: local-v3
