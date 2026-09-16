@@ -1,19 +1,52 @@
-generated: '2026-07-15'
+generated: '2026-09-16'
 method: generated
-source: openapi/capitalist-openapi.yml
+source: openapi/capitalist-account-api-openapi.yml, openapi/capitalist-capitalist-payments-api-api-openapi.yml,
+  openapi/capitalist-exchange-api-openapi.yml, openapi/capitalist-payment-api-openapi.yml, openapi/capitalist-rate-api-openapi.yml
 description: Recommended x-agentic-access execution contracts, classified heuristically from
   the OpenAPI. A governance starting point for exposing this API to AI agents — review and bind
   audience per deployment. See research/curity/agentic-governance/.
 summary:
-  operations: 1
+  operations: 7
   by_action_class:
-    acting: 1
+    connected: 4
+    acting: 3
   by_consequence:
+    read: 4
+    physical: 2
     write: 1
   human_in_the_loop_required: 0
 operations:
+- path: /v1/account/list
+  method: get
+  operationId: getV1AccountList
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
 - path: /
   method: post
+  operationId: postRoot
+  x-agentic-access:
+    action-class: acting
+    consequence: physical
+    subject: required
+    audience: null
+    token:
+      max-ttl: 300
+      exchange: true
+      purpose-required: true
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/exchange
+  method: post
+  operationId: postV1Exchange
   x-agentic-access:
     action-class: acting
     consequence: write
@@ -27,3 +60,51 @@ operations:
       - abnormal
       - high-value
     audit: required
+- path: /v1/payment
+  method: post
+  operationId: postV1Payment
+  x-agentic-access:
+    action-class: acting
+    consequence: physical
+    subject: required
+    audience: null
+    token:
+      max-ttl: 300
+      exchange: true
+      purpose-required: true
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/payment/document/{documentId}
+  method: get
+  operationId: getV1PaymentDocumentByDocumentId
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/payment/{userRequestId}
+  method: get
+  operationId: getV1PaymentByUserRequestId
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/rate
+  method: get
+  operationId: getV1Rate
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
