@@ -51,6 +51,15 @@ tags:
   - Payment Platform
   - Payments
   - Payouts
+  - Remittances
+tags_raw:
+  - Bulk Payouts
+  - Cryptocurrency
+  - Finance
+  - Mass Payments
+  - Payment Platform
+  - Payments
+  - Payouts
   - Remittance
 created: '2024-11-05'
 modified: '2026-09-05'
@@ -81,6 +90,8 @@ apis:
   humanURL: https://capitalist.net/developers/api
   baseURL: https://api2.capitalist.net
   tags:
+  - Account
+  tags_raw:
   - account
   properties:
   - type: OpenAPI
@@ -101,6 +112,8 @@ apis:
   humanURL: https://capitalist.net/developers/api
   baseURL: https://api2.capitalist.net
   tags:
+  - Exchange
+  tags_raw:
   - exchange
   properties:
   - type: OpenAPI
@@ -121,6 +134,8 @@ apis:
   humanURL: https://capitalist.net/developers/api
   baseURL: https://api2.capitalist.net
   tags:
+  - Payments
+  tags_raw:
   - payment
   properties:
   - type: OpenAPI
@@ -141,6 +156,8 @@ apis:
   humanURL: https://capitalist.net/developers/api
   baseURL: https://api2.capitalist.net
   tags:
+  - Rate
+  tags_raw:
   - rate
   properties:
   - type: OpenAPI
