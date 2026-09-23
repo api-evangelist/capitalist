@@ -1,0 +1,88 @@
+openapi: 3.2.0
+info:
+  title: Integration Account API
+  description: '### Authentication Headers Required / Требуемые заголовки аутентификации
+
+
+    - `API-Key`:your api key / ваш ключ API
+
+    - `X-Request-Timestamp`: epoch millis / метка времени в миллисекундах
+
+    - `Signature` = sha256_hex(`X-Request-Timestamp` + request body + API secret)
+
+
+    Signature Calculation Example / Пример вычисления подписи
+
+
+    #### Input Data / Входные данные
+
+    - **Request timestamp**: `1678901234567`
+
+    - **Request body**…'
+  version: '1.0'
+servers:
+- url: https://api2.capitalist.net
+tags:
+- name: Account
+paths:
+  /v1/account/list:
+    description: '- account
+
+      '
+    get:
+      tags:
+      - Account
+      description: '- account'
+      parameters:
+      - name: currency
+        in: query
+        required: true
+        schema:
+          type:
+          - string
+          - 'null'
+        allowReserved: false
+        style: form
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShortAccount'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+      summary: Get account list
+      x-summary-source: derived
+      operationId: getV1AccountList
+      x-operation-id-source: derived
+components:
+  schemas:
+    SimpleError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+      - error
+    ShortAccount:
+      type: object
+      properties:
+        number:
+          type: string
+        currency:
+          type: string
+        name:
+          type: string
+        balance:
+          type: number
+          format: double
+      required:
+      - number
+      - currency
+      - name
+      - balance

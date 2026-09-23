@@ -3,32 +3,7 @@ info:
   title: Capitalist Payments API
   description: 'Capitalist Payments API for mass payouts, accounts, currency conversion,
 
-    and document history. The API is a single HTTP/1.1 POST endpoint at
-
-    https://api.capitalist.net/ where the operation is selected via the
-
-    `operation` form field. Requests may be sent as
-
-    application/x-www-form-urlencoded or multipart/form-data and must
-
-    include a Capitalist username and password (or a "Plain password" or
-
-    encrypted-certificate signature) plus an optional response format
-
-    selector.
-
-
-    This specification is a best-effort, hand-authored representation of
-
-    the publicly documented operations at
-
-    https://capitalist.net/developers/api. Detailed operation parameters
-
-    and response payloads are documented per-operation by Capitalist; this
-
-    file models the high-level operation envelope.
-
-    '
+    and document history.'
   version: 1.0.0
   contact:
     name: Capitalist
@@ -51,9 +26,7 @@ paths:
 
         documentation for the operation-specific parameters and response
 
-        schemas.
-
-        '
+        schemas.'
       requestBody:
         required: true
         content:
@@ -84,6 +57,8 @@ paths:
                 type: string
       tags:
       - Capitalist Payments API
+      operationId: postRoot
+      x-operation-id-source: derived
 components:
   schemas:
     OperationRequest:

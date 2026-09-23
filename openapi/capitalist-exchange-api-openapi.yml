@@ -1,0 +1,79 @@
+openapi: 3.2.0
+info:
+  title: Integration Exchange API
+  description: '### Authentication Headers Required / Требуемые заголовки аутентификации
+
+
+    - `API-Key`:your api key / ваш ключ API
+
+    - `X-Request-Timestamp`: epoch millis / метка времени в миллисекундах
+
+    - `Signature` = sha256_hex(`X-Request-Timestamp` + request body + API secret)
+
+
+    Signature Calculation Example / Пример вычисления подписи
+
+
+    #### Input Data / Входные данные
+
+    - **Request timestamp**: `1678901234567`
+
+    - **Request body**…'
+  version: '1.0'
+servers:
+- url: https://api2.capitalist.net
+tags:
+- name: Exchange
+paths:
+  /v1/exchange:
+    description: '- exchange
+
+      '
+    post:
+      tags:
+      - Exchange
+      description: '- exchange'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConversionDocumentRestRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: 'null'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+      summary: Create exchange
+      x-summary-source: derived
+      operationId: postV1Exchange
+      x-operation-id-source: derived
+components:
+  schemas:
+    CreateConversionDocumentRestRequest:
+      type: object
+      properties:
+        fromAccount:
+          type: string
+        toAccount:
+          type: string
+        amount:
+          type: number
+          format: double
+      required:
+      - fromAccount
+      - toAccount
+      - amount
+    SimpleError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+      - error

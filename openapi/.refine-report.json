@@ -1,17 +1,36 @@
 {
   "provider": "capitalist",
   "sources": [
-    "capitalist-capitalist-payments-api-api-openapi.yml"
+    "_original/capitalist-integration-api-openapi.json",
+    "_original/capitalist-openapi.yml"
   ],
   "outputs": [
+    "capitalist-account-api-openapi.yml",
+    "capitalist-exchange-api-openapi.yml",
+    "capitalist-payment-api-openapi.yml",
+    "capitalist-rate-api-openapi.yml",
     "capitalist-capitalist-payments-api-api-openapi.yml"
   ],
   "archived": [],
   "errors": [],
   "warnings": [],
   "notes": [
-    "capitalist-capitalist-payments-api-api-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "sourced from openapi/_original/ (2 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "capitalist-integration-api-openapi.json: upgraded openapi 3.0.1 -> OpenAPI 3.2.0",
+    "capitalist-integration-api-openapi.json: declared missing tag: account",
+    "capitalist-integration-api-openapi.json: declared missing tag: exchange",
+    "capitalist-integration-api-openapi.json: declared missing tag: payment",
+    "capitalist-integration-api-openapi.json: declared missing tag: rate",
+    "capitalist-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "capitalist-openapi.yml: tagged paths POST / -> Capitalist Payments API",
+    "capitalist-openapi.yml: declared missing tag: Capitalist Payments API",
     "apis.yml register: already-registered"
   ],
-  "skipped": []
+  "skipped": [
+    "capitalist-account-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "capitalist-capitalist-payments-api-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "capitalist-exchange-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "capitalist-payment-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "capitalist-rate-api-openapi.yml: previously refined output, superseded by openapi/_original/"
+  ]
 }

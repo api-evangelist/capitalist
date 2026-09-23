@@ -1,0 +1,1080 @@
+openapi: 3.2.0
+info:
+  title: Integration Payment API
+  description: '### Authentication Headers Required / Требуемые заголовки аутентификации
+
+
+    - `API-Key`:your api key / ваш ключ API
+
+    - `X-Request-Timestamp`: epoch millis / метка времени в миллисекундах
+
+    - `Signature` = sha256_hex(`X-Request-Timestamp` + request body + API secret)
+
+
+    Signature Calculation Example / Пример вычисления подписи
+
+
+    #### Input Data / Входные данные
+
+    - **Request timestamp**: `1678901234567`
+
+    - **Request body**…'
+  version: '1.0'
+servers:
+- url: https://api2.capitalist.net
+tags:
+- name: Payment
+paths:
+  /v1/payment:
+    description: '- payment
+
+      '
+    post:
+      tags:
+      - Payment
+      description: '- payment'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentIntegrationRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePaymentIntegrationResponse'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+      summary: Create payment
+      x-summary-source: derived
+      operationId: postV1Payment
+      x-operation-id-source: derived
+  /v1/payment/document/{documentId}:
+    description: '- payment
+
+      '
+    get:
+      tags:
+      - Payment
+      description: '- payment'
+      parameters:
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        style: simple
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithdrawalStateResponse'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+      summary: Get payment document by document id
+      x-summary-source: derived
+      operationId: getV1PaymentDocumentByDocumentId
+      x-operation-id-source: derived
+  /v1/payment/{userRequestId}:
+    description: '- payment
+
+      '
+    get:
+      tags:
+      - Payment
+      description: '- payment'
+      parameters:
+      - name: userRequestId
+        in: path
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithdrawalStateResponse'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+      summary: Get payment by user request id
+      x-summary-source: derived
+      operationId: getV1PaymentByUserRequestId
+      x-operation-id-source: derived
+components:
+  schemas:
+    COBANK:
+      type: object
+      properties:
+        email:
+          type: string
+        fullName:
+          type: string
+        type:
+          type: string
+        phone:
+          type: string
+        taxId:
+          type: string
+      required:
+      - taxId
+      - fullName
+      - email
+      - phone
+      - type
+    WithdrawalStateResponse:
+      type: object
+      properties:
+        userRequestId:
+          type: string
+        amount:
+          type: number
+          format: double
+        accountFrom:
+          type: string
+        callbackUrl:
+          type: string
+        comment:
+          type:
+          - string
+          - 'null'
+        currency:
+          type: string
+        documentId:
+          type: integer
+          format: int64
+        type:
+          type: string
+        fee:
+          type: number
+          format: double
+        state:
+          type: string
+        payload:
+          type: string
+      required:
+      - state
+      - fee
+      - documentId
+      - amount
+      - currency
+      - type
+      - accountFrom
+      - payload
+      - userRequestId
+      - callbackUrl
+    ARBANK:
+      type: object
+      properties:
+        account:
+          type: string
+          description: beneficiary account id, alphanumeric - exact length depends on bank specifications / номер счета получателя, буквенно-цифровое, точная длина зависит от требований банка
+        taxId:
+          type: string
+          description: exactly 11 digits of the beneficiary's tax id / ровно 11 цифр налогового номера получателя
+        cbu:
+          type: string
+          description: a 22-digit numeric code used to identify and route money transfers / 22-значный цифровой код, используемый для идентификации и направления денежных переводов
+        type:
+          type: string
+      required:
+      - account
+      - taxId
+      - cbu
+      - type
+      description: Argentinian banks / банковские счета Аргентины
+    BRBANK:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        additionalRemark:
+          type: string
+        type:
+          type: string
+        taxId:
+          type: string
+      required:
+      - taxId
+      - name
+      - email
+      - additionalRemark
+      - type
+    UKRCARD:
+      type: object
+      properties:
+        account:
+          type: string
+        autosplit:
+          type: boolean
+        cardCountry:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - autosplit
+      - cardCountry
+      - type
+    SBP:
+      type: object
+      properties:
+        bankName:
+          type: string
+        email:
+          type: string
+        bank:
+          type: string
+        lastName:
+          type: string
+        firstName:
+          type: string
+        account:
+          type: string
+        type:
+          type: string
+        nspk:
+          type: string
+      required:
+      - account
+      - email
+      - nspk
+      - firstName
+      - lastName
+      - bank
+      - bankName
+      - type
+    YOTA:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    WORLDCARDEUR:
+      type: object
+      properties:
+        name:
+          type: string
+        cardCountry:
+          type: string
+        addressCountryCode:
+          type: string
+        addressCity:
+          type: string
+        surname:
+          type: string
+        cardCurrency:
+          type: string
+        cardExpiryYear:
+          type: string
+        birthDate:
+          type: string
+        address:
+          type: string
+        account:
+          type: string
+        type:
+          type: string
+        cardExpiryMonth:
+          type: string
+      required:
+      - account
+      - name
+      - surname
+      - cardCurrency
+      - birthDate
+      - address
+      - addressCountryCode
+      - addressCity
+      - cardExpiryMonth
+      - cardExpiryYear
+      - cardCountry
+      - type
+    UKR_MOBILE:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    UZCARD:
+      type: object
+      properties:
+        account:
+          type: string
+        isUzCard:
+          type: boolean
+        type:
+          type: string
+      required:
+      - account
+      - isUzCard
+      - type
+    EUR_SKRILL:
+      type: object
+      properties:
+        name:
+          type: string
+        zip:
+          type: string
+        state:
+          type:
+          - string
+          - 'null'
+        surname:
+          type: string
+        country:
+          type: string
+        code:
+          type: string
+        address:
+          type: string
+        type:
+          type: string
+        client_ip:
+          type: string
+        phone:
+          type: string
+        wallet_email:
+          type: string
+        city:
+          type: string
+      required:
+      - wallet_email
+      - name
+      - surname
+      - country
+      - city
+      - address
+      - zip
+      - code
+      - phone
+      - client_ip
+      - type
+    EUR_NETELLER:
+      type: object
+      properties:
+        name:
+          type: string
+        zip:
+          type: string
+        state:
+          type: string
+        surname:
+          type: string
+        country:
+          type: string
+        code:
+          type: string
+        address:
+          type: string
+        type:
+          type: string
+        client_ip:
+          type: string
+        phone:
+          type: string
+        wallet_email:
+          type: string
+        city:
+          type: string
+      required:
+      - wallet_email
+      - name
+      - surname
+      - country
+      - city
+      - address
+      - zip
+      - code
+      - phone
+      - client_ip
+      - state
+      - type
+    GCashReceiver:
+      type: object
+      properties:
+        surName:
+          type: string
+        givName:
+          type: string
+        phone:
+          type: string
+      required:
+      - surName
+      - givName
+      - phone
+    USDTTRC20:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    USDTERC20:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    WORLDCARDUSD:
+      type: object
+      properties:
+        name:
+          type: string
+        cardCountry:
+          type: string
+        addressCountryCode:
+          type: string
+        addressCity:
+          type: string
+        surname:
+          type: string
+        cardCurrency:
+          type: string
+        cardExpiryYear:
+          type: string
+        birthDate:
+          type: string
+        address:
+          type: string
+        account:
+          type: string
+        type:
+          type: string
+        cardExpiryMonth:
+          type: string
+      required:
+      - account
+      - name
+      - surname
+      - cardCurrency
+      - birthDate
+      - address
+      - addressCountryCode
+      - addressCity
+      - cardExpiryMonth
+      - cardExpiryYear
+      - cardCountry
+      - type
+    MEGAFON:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    TRCARD:
+      type: object
+      properties:
+        beneficiaryFullname:
+          type: string
+        senderIdentityNumber:
+          type: string
+        account:
+          type: string
+        type:
+          type: string
+        senderFullname:
+          type: string
+      required:
+      - account
+      - senderFullname
+      - senderIdentityNumber
+      - beneficiaryFullname
+      - type
+    PaymentPayload:
+      oneOf:
+      - $ref: '#/components/schemas/ARBANK'
+      - $ref: '#/components/schemas/AZCARD'
+      - $ref: '#/components/schemas/MALAYSIA_BANK'
+      - $ref: '#/components/schemas/INDONESIA_BANK'
+      - $ref: '#/components/schemas/THAILAND_BANK'
+      - $ref: '#/components/schemas/SOUTH_KOREA_BANK'
+      - $ref: '#/components/schemas/BRBANK'
+      - $ref: '#/components/schemas/COBANK'
+      - $ref: '#/components/schemas/BITCOIN'
+      - $ref: '#/components/schemas/ETH'
+      - $ref: '#/components/schemas/USDCERC20'
+      - $ref: '#/components/schemas/USDTERC20'
+      - $ref: '#/components/schemas/USDTTRC20'
+      - $ref: '#/components/schemas/EUR_NETELLER'
+      - $ref: '#/components/schemas/EUR_SKRILL'
+      - $ref: '#/components/schemas/GCASH'
+      - $ref: '#/components/schemas/GECARD'
+      - $ref: '#/components/schemas/IMPS'
+      - $ref: '#/components/schemas/KZCARD'
+      - $ref: '#/components/schemas/QIWI'
+      - $ref: '#/components/schemas/YANDEX'
+      - $ref: '#/components/schemas/MEGAFON'
+      - $ref: '#/components/schemas/TMOBILE'
+      - $ref: '#/components/schemas/BEELINE'
+      - $ref: '#/components/schemas/MTS'
+      - $ref: '#/components/schemas/TELE2'
+      - $ref: '#/components/schemas/YOTA'
+      - $ref: '#/components/schemas/PAYONEER'
+      - $ref: '#/components/schemas/PAYONEER_EUR'
+      - $ref: '#/components/schemas/PAYONEER_USD'
+      - $ref: '#/components/schemas/PAYTM'
+      - $ref: '#/components/schemas/RUCARD'
+      - $ref: '#/components/schemas/RUCARDP2PDYN'
+      - $ref: '#/components/schemas/RUCARDP2P'
+      - $ref: '#/components/schemas/SBP'
+      - $ref: '#/components/schemas/TRCARD'
+      - $ref: '#/components/schemas/UKRCARD'
+      - $ref: '#/components/schemas/UKR_MOBILE'
+      - $ref: '#/components/schemas/UZCARD'
+      - $ref: '#/components/schemas/WORLDCARDEUR'
+      - $ref: '#/components/schemas/WORLDCARDUSD'
+      discriminator:
+        propertyName: type
+        mapping:
+          IMPS: '#/components/schemas/IMPS'
+          YANDEX: '#/components/schemas/YANDEX'
+          TRCARD: '#/components/schemas/TRCARD'
+          PAYONEER_EUR: '#/components/schemas/PAYONEER_EUR'
+          GCASH: '#/components/schemas/GCASH'
+          BITCOIN: '#/components/schemas/BITCOIN'
+          EUR_SKRILL: '#/components/schemas/EUR_SKRILL'
+          UZCARD: '#/components/schemas/UZCARD'
+          MEGAFON: '#/components/schemas/MEGAFON'
+          AZCARD: '#/components/schemas/AZCARD'
+          COBANK: '#/components/schemas/COBANK'
+          UKR_MOBILE: '#/components/schemas/UKR_MOBILE'
+          QIWI: '#/components/schemas/QIWI'
+          WORLDCARDEUR: '#/components/schemas/WORLDCARDEUR'
+          SBP: '#/components/schemas/SBP'
+          THAILAND_BANK: '#/components/schemas/THAILAND_BANK'
+          USDTTRC20: '#/components/schemas/USDTTRC20'
+          EUR_NETELLER: '#/components/schemas/EUR_NETELLER'
+          YOTA: '#/components/schemas/YOTA'
+          USDTERC20: '#/components/schemas/USDTERC20'
+          BRBANK: '#/components/schemas/BRBANK'
+          RUCARD: '#/components/schemas/RUCARD'
+          ETH: '#/components/schemas/ETH'
+          SOUTH_KOREA_BANK: '#/components/schemas/SOUTH_KOREA_BANK'
+          MALAYSIA_BANK: '#/components/schemas/MALAYSIA_BANK'
+          BEELINE: '#/components/schemas/BEELINE'
+          ARBANK: '#/components/schemas/ARBANK'
+          TMOBILE: '#/components/schemas/TMOBILE'
+          USDCERC20: '#/components/schemas/USDCERC20'
+          WORLDCARDUSD: '#/components/schemas/WORLDCARDUSD'
+          RUCARDP2PDYN: '#/components/schemas/RUCARDP2PDYN'
+          PAYTM: '#/components/schemas/PAYTM'
+          KZCARD: '#/components/schemas/KZCARD'
+          TELE2: '#/components/schemas/TELE2'
+          PAYONEER: '#/components/schemas/PAYONEER'
+          RUCARDP2P: '#/components/schemas/RUCARDP2P'
+          INDONESIA_BANK: '#/components/schemas/INDONESIA_BANK'
+          PAYONEER_USD: '#/components/schemas/PAYONEER_USD'
+          MTS: '#/components/schemas/MTS'
+          UKRCARD: '#/components/schemas/UKRCARD'
+          GECARD: '#/components/schemas/GECARD'
+    INDONESIA_BANK:
+      type: object
+      properties:
+        account:
+          type: string
+        destination:
+          $ref: '#/components/schemas/BankDestination'
+        recipient:
+          $ref: '#/components/schemas/BankRecipient'
+        type:
+          type: string
+      required:
+      - account
+      - destination
+      - recipient
+      - type
+    KZCARD:
+      type: object
+      properties:
+        cardCountry:
+          type: string
+        isKzCard:
+          type: boolean
+        binCountry:
+          type: string
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - isKzCard
+      - binCountry
+      - cardCountry
+      - type
+    RUCARDP2PDYN:
+      type: object
+      properties:
+        name:
+          type: string
+        cardCountry:
+          type: string
+        surname:
+          type: string
+        midname:
+          type: string
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - name
+      - surname
+      - midname
+      - cardCountry
+      - type
+    PAYONEER_USD:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    TELE2:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    ETH:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    BankDestination:
+      type: object
+      properties:
+        bankCode:
+          type: string
+        accountName:
+          type: string
+        accountNumber:
+          type: string
+      required:
+      - bankCode
+      - accountName
+      - accountNumber
+    TMOBILE:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    MTS:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    GCashSender:
+      type: object
+      properties:
+        purposeOfRemittance:
+          type: string
+      required:
+      - purposeOfRemittance
+    BEELINE:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    RUCARD:
+      type: object
+      properties:
+        name:
+          type: string
+        cardCountry:
+          type: string
+        surname:
+          type: string
+        midname:
+          type: string
+        account:
+          type: string
+        type:
+          type: string
+        autosplit:
+          type: boolean
+      required:
+      - account
+      - name
+      - surname
+      - midname
+      - cardCountry
+      - autosplit
+      - type
+    GECARD:
+      type: object
+      properties:
+        receiverFirstname:
+          type: string
+        senderIdentityNumber:
+          type: string
+        account:
+          type: string
+        type:
+          type: string
+        receiverLastname:
+          type: string
+        senderLastname:
+          type: string
+        senderFirstname:
+          type: string
+      required:
+      - account
+      - senderFirstname
+      - senderLastname
+      - senderIdentityNumber
+      - receiverFirstname
+      - receiverLastname
+      - type
+    AZCARD:
+      type: object
+      properties:
+        cardCountry:
+          type: string
+          description: 3-letter country code (AZE) / код страны карты
+        cardExpiryYear:
+          type: string
+          description: 4-digit future year (e.g., 2033) / год в формате YYYY (не ранее текущего)
+        binCountry:
+          type: string
+          description: 3-letter country code (e.g., AZE) / код страны BIN карты
+        isAzCard:
+          type: boolean
+          description: indicates whether the card is issued in AZ / указывает, является ли карта AZ
+        account:
+          type: string
+          description: beneficiary card number, exact length depends on issuer / числовой номер карты получателя, длина зависит от эмитента
+        type:
+          type: string
+        cardExpiryMonth:
+          type: string
+          description: 2-digit month (01-12) / месяц в формате MM (01-12)
+      required:
+      - account
+      - cardExpiryYear
+      - cardExpiryMonth
+      - isAzCard
+      - binCountry
+      - cardCountry
+      - type
+      description: Azerbaijani cards / карты Азербайджана
+    YANDEX:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    PAYONEER_EUR:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    MALAYSIA_BANK:
+      type: object
+      properties:
+        account:
+          type: string
+        destination:
+          $ref: '#/components/schemas/BankDestination'
+        recipient:
+          $ref: '#/components/schemas/BankRecipient'
+        type:
+          type: string
+      required:
+      - account
+      - destination
+      - recipient
+      - type
+    BankRecipient:
+      type: object
+      properties:
+        city:
+          type: string
+        email:
+          type: string
+        lastName:
+          type: string
+        firstName:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        zipCode:
+          type: string
+        country:
+          type: string
+      required:
+      - firstName
+      - lastName
+      - email
+      - phone
+      - zipCode
+      - city
+      - address
+      - country
+    CreatePaymentIntegrationResponse:
+      type: object
+      properties:
+        documentId:
+          type: integer
+          format: int64
+      required:
+      - documentId
+    THAILAND_BANK:
+      type: object
+      properties:
+        account:
+          type: string
+        destination:
+          $ref: '#/components/schemas/BankDestination'
+        recipient:
+          $ref: '#/components/schemas/BankRecipient'
+        type:
+          type: string
+      required:
+      - account
+      - destination
+      - recipient
+      - type
+    PAYONEER:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    RUCARDP2P:
+      type: object
+      properties:
+        name:
+          type: string
+        cardCountry:
+          type: string
+        surname:
+          type: string
+        midname:
+          type: string
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - name
+      - surname
+      - midname
+      - cardCountry
+      - type
+    CreatePaymentIntegrationRequest:
+      type: object
+      properties:
+        userRequestId:
+          type: string
+        payload:
+          $ref: '#/components/schemas/PaymentPayload'
+        amount:
+          type: number
+          format: double
+        accountFrom:
+          type: string
+        callbackUrl:
+          type: string
+        comment:
+          type:
+          - string
+          - 'null'
+        currency:
+          type:
+          - string
+          - 'null'
+      required:
+      - amount
+      - accountFrom
+      - payload
+      - userRequestId
+      - callbackUrl
+    BITCOIN:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    QIWI:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    IMPS:
+      type: object
+      properties:
+        account:
+          type: string
+        account_name:
+          type: string
+        bank_code:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - account_name
+      - bank_code
+      - type
+    SimpleError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+      - error
+    GCASH:
+      type: object
+      properties:
+        channelName:
+          type: string
+        receiver:
+          $ref: '#/components/schemas/GCashReceiver'
+        channelCode:
+          type: string
+        receiveCurrency:
+          type: string
+        sender:
+          $ref: '#/components/schemas/GCashSender'
+        account:
+          type: string
+        type:
+          type: string
+        receiveAmount:
+          type: number
+          format: double
+      required:
+      - receiver
+      - sender
+      - account
+      - receiveAmount
+      - receiveCurrency
+      - channelCode
+      - channelName
+      - type
+    USDCERC20:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
+    SOUTH_KOREA_BANK:
+      type: object
+      properties:
+        account:
+          type: string
+        destination:
+          $ref: '#/components/schemas/BankDestination'
+        recipient:
+          $ref: '#/components/schemas/BankRecipient'
+        type:
+          type: string
+      required:
+      - account
+      - destination
+      - recipient
+      - type
+    PAYTM:
+      type: object
+      properties:
+        account:
+          type: string
+        type:
+          type: string
+      required:
+      - account
+      - type
