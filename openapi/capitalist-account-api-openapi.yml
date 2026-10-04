@@ -62,13 +62,6 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
-    SimpleError:
-      type: object
-      properties:
-        error:
-          type: string
-      required:
-      - error
     ShortAccount:
       type: object
       properties:
@@ -86,3 +79,10 @@ components:
       - currency
       - name
       - balance
+    SimpleError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+      - error

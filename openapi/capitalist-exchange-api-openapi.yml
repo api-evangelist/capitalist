@@ -56,6 +56,13 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    SimpleError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+      - error
     CreateConversionDocumentRestRequest:
       type: object
       properties:
@@ -70,10 +77,3 @@ components:
       - fromAccount
       - toAccount
       - amount
-    SimpleError:
-      type: object
-      properties:
-        error:
-          type: string
-      required:
-      - error
