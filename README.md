@@ -1,4 +1,4 @@
-# Capitalist (capitalist)
+# Capitalist
 
 <!-- API-EVANGELIST-PROVENANCE:BEGIN -->
 > ### About this repository
@@ -64,67 +64,147 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Capitalist is a payment platform that lets businesses make mass payouts and receive money across multiple payment systems and cryptocurrencies without having to open separate accounts with each. The Capitalist API automates bulk payouts, exchange between currencies and digital assets, account balance queries, and transaction history retrieval for fintech, affiliate-network, and marketplace use cases operating across the CIS region and globally.
+Capitalist is a payment platform that lets businesses make mass payouts and receive money across multiple payment systems and cryptocurrencies without having to open separate accounts with each. The Capitalist Integration API automates bulk payouts to cards, bank transfers, mobile operators, fast payment systems, e-wallets and cryptocurrencies, converts between fiat and digital-asset balances, reads exchange rates and account balances, retrieves transaction and merchant-order history, and runs end-user KYC — for fintech, affiliate-network, and marketplace use cases operating across the CIS region and globally.
 
-**APIs.json:** [https://raw.githubusercontent.com/api-evangelist/capitalist/refs/heads/main/apis.yml](https://raw.githubusercontent.com/api-evangelist/capitalist/refs/heads/main/apis.yml)
+**Areas:** Bulk Payouts · Cryptocurrency · Finance · Mass Payments · Payment Platform · Payments · Payouts · Remittances
 
-## Scope
+## Capitalist on APIs.io
 
-- **Type:** Index
-- **Position:** Consumer
-- **Access:** 3rd-Party
+Everything profiled for Capitalist is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/capitalist/](https://apis.io/providers/capitalist/)** — or go straight to one of the APIs or properties below.
 
-## Tags
+### APIs (5)
 
-- Bulk Payouts
-- Cryptocurrency
-- Finance
-- Mass Payments
-- Payment Platform
-- Payments
-- Payouts
-- Remittance
+- [Capitalist Payments API (v1, deprecated)](https://apis.io/apis/capitalist/capitalist-capitalist-payments-api-api/) — The first generation of the Capitalist API: a single HTTP POST endpoint at https://api.capitalist.net where an `operation` form field selects the call…
+- [Capitalist Account API](https://apis.io/apis/capitalist/capitalist-account-api/) — The account API from Capitalist — 1 operation(s) for account.
+- [Capitalist Exchange API](https://apis.io/apis/capitalist/capitalist-exchange-api/) — The exchange API from Capitalist — 1 operation(s) for exchange.
+- [Capitalist Payment API](https://apis.io/apis/capitalist/capitalist-payment-api/) — The payment API from Capitalist — 3 operation(s) for payment.
+- [Capitalist Rate API](https://apis.io/apis/capitalist/capitalist-rate-api/) — The rate API from Capitalist — 1 operation(s) for rate.
 
-## Timestamps
+### Published properties
 
-- **Created:** 2024-11-05
-- **Modified:** 2026-04-23
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
 
-## APIs
+#### AsyncAPI (1)
 
-### Capitalist API
+Event-driven and webhook contracts.
 
-The Capitalist API enables programmatic mass payouts, transfers, currency conversion, and balance and transaction management across Capitalist's supported payment systems and cryptocurrencies. It is designed for businesses that need to pay large numbers of recipients (affiliates, freelancers, publishers) without maintaining separate accounts in each underlying payment system.
+- [Capitalist Webhooks](https://apis.io/asyncapis/capitalist/capitalist-webhooks/)
 
-- **Human URL:** [https://capitalist.net/developers/api](https://capitalist.net/developers/api)
+#### MCP servers (1)
 
-#### Tags
+Model Context Protocol servers that expose the API to agents.
 
-- Bulk Payouts
-- Mass Payments
-- Payments
-- Payouts
+- [Derived MCP tool candidate](https://apis.io/servers/capitalist/derived-mcp-tool-candidate/)
 
-#### Properties
+#### Agentic access (1)
 
-- [Documentation](https://capitalist.net/developers/api)
-- [Website](https://capitalist.net/developers/api)
-- [Postman Collection](collections/capitalist.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/capitalist.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+Which operations an agent can call, which act, and which need a human in the loop.
 
-## Common Properties
+- [Capitalist Agentic Access](https://apis.io/agentic-access/capitalist/capitalist-agentic-access/)
 
-- [GitHub Organization](https://github.com/capitalist-net)
-- [LinkedIn](https://www.linkedin.com/company/capitalist-inc)
+#### Collections (2)
+
+Postman and Open Collection request collections.
+
+- [Capitalist Payments API](https://apis.io/collections/capitalist/open-capitalist/)
+- [Capitalist Payments Capitalist Payments API API](https://apis.io/collections/capitalist/open-capitalist-capitalist-payments-api-api/)
+
+#### Overlays (1)
+
+OpenAPI overlays, including conversational phrasing for each operation.
+
+- [Capitalist Integration Api Overlay](https://apis.io/overlays/capitalist/capitalist-integration-api-overlay/)
+
+#### Security (2)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Capitalist Authentication](https://apis.io/security/capitalist/capitalist-authentication/)
+- [Capitalist Domain Security](https://apis.io/security/capitalist/capitalist-domain-security/)
+
+#### Plans and pricing (1)
+
+Published plans, tiers and prices.
+
+- [Capitalist Plans Pricing](https://apis.io/plans/capitalist/capitalist-plans-pricing/)
+
+#### Rate limits (1)
+
+Published request limits.
+
+- [Capitalist Rate Limits](https://apis.io/rate-limits/capitalist/capitalist-rate-limits/)
+
+#### FinOps (1)
+
+What the API costs to run, by operation.
+
+- [Capitalist Finops](https://apis.io/finops/capitalist/capitalist-finops/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
 - [Website](https://capitalist.net/)
 - [Documentation](https://capitalist.net/developers/api)
-- [Sign Up](https://capitalist.net/reg)
-- [Login](https://capitalist.net/login)
+- [API reference](https://docs.capitalist.net/api/integration-api.html)
 - [Pricing](https://capitalist.net/fees)
-- [Privacy Policy](https://capitalist.net/privacypolicy)
-- [Terms of Service](https://capitalist.net/useragreement)
+- [Support](https://capitalist.net/support)
+- [Blog](https://capitalist.net/news)
+- [Terms of service](https://capitalist.net/useragreement)
+- [Privacy policy](https://capitalist.net/privacypolicy)
+- [GitHub](https://github.com/capitalist-net)
 
-## Maintainers
+## API Evangelist rating
 
-**FN:** Kin Lane
-**Email:** kin@apievangelist.com
+**Kin Score 46.4** — developing · rubric 0.25.0 · scored 2026-10-23
+
+| Facet | Score |
+|---|---|
+| Discoverability | 66.1 |
+| Contract quality | 58.1 |
+| Contract governance | 18.2 |
+| Operational transparency | 31.6 |
+| Developer ergonomics | 54.2 |
+| Access clarity | 38.2 |
+
+**Agent readiness 35.4** — agent-ready
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | derived (partial credit) |
+| Reversibility Documented | — |
+| MCP Server | — |
+| Auth Clarity | bearer (partial credit) |
+| Idempotency | documented (partial credit) |
+| Error Semantics | verified |
+| OpenAPI Examples | documented (partial credit) |
+| Rate Limit Signal | documented (partial credit) |
+| Event Surface Described | yes |
+| Agent Skills | derived (partial credit) |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | — |
+| Delegated Identity | — |
+| Protected Resource Metadata | — |
+| Dynamic Client Registration | — |
+| Agentic Commerce | — |
+| Pagination Ratio | — |
+| Operation Distinctiveness | distinct |
+
+**Regulatory alignment 27.7** — Payments
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/capitalist/](https://apis.io/providers/capitalist/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Capitalist: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/capitalist/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
